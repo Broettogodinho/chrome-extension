@@ -1,0 +1,107 @@
+/* popup/popup.css */
+body {
+    font-family: Arial, sans-serif;
+    width: 380px; /* Largura ajustada para acomodar melhor as seções de experiência */
+    padding: 15px;
+    background-color: #f4f7f6; /* Um fundo suave */
+    color: #333; /* Cor de texto padrão */
+}
+
+h1, h2, h3 {
+    color: #2c3e50; /* Um tom de azul escuro para títulos */
+    margin-top: 20px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee; /* Linha sutil abaixo dos títulos de seção */
+    padding-bottom: 5px;
+}
+
+label {
+    font-weight: bold;
+    display: block; /* Cada label em sua própria linha */
+    margin-bottom: 5px;
+    color: #555; /* Cor para labels */
+}
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="month"], /* Adicionado para os campos de data de início/fim */
+textarea {
+    width: calc(100% - 12px); /* 100% menos padding e border */
+    padding: 8px; /* Padding um pouco maior */
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box; /* Garante que padding não adicione largura extra */
+}
+
+/* Estilo para campos desabilitados, como a Data de Fim quando "Atual" está marcado */
+input:disabled {
+    background-color: #e9e9e9;
+    cursor: not-allowed;
+}
+
+button {
+    background-color: #007bff; /* Azul primário para botões principais */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px; /* Tamanho de fonte um pouco menor para botões */
+    margin-top: 10px; /* Espaço acima dos botões */
+    transition: background-color 0.2s ease; /* Transição suave no hover */
+}
+
+button:hover {
+    background-color: #0056b3; /* Azul mais escuro no hover */
+}
+
+/* Estilos específicos para o container de experiências */
+#experiencesContainer {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #eee; /* Linha de separação com a seção anterior */
+}
+
+/* Estilos para cada bloco de experiência individual */
+.experience-item {
+    border: 1px solid #ddd; /* Borda leve para cada item */
+    padding: 15px;
+    margin-bottom: 20px; /* Espaço entre os blocos de experiência */
+    background-color: #fff; /* Fundo branco para cada item de experiência */
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra sutil para um efeito de profundidade */
+}
+
+.experience-item h3 {
+    margin-top: 0; /* Remove margem superior padrão do h3 dentro do item */
+    color: #34495e; /* Cor para o título de cada experiência */
+    font-size: 1.1em;
+    border-bottom: none; /* Remove a borda inferior que vem do h3 geral */
+    padding-bottom: 0;
+}
+
+/* Estilo para o botão "Remover" dentro de cada experiência */
+.remove-experience-btn {
+    background-color: #dc3545; /* Vermelho para botões de remover */
+    margin-top: 10px;
+}
+
+.remove-experience-btn:hover {
+    background-color: #c82333; /* Vermelho mais escuro no hover */
+}
+
+/* Estilo para a linha separadora entre experiências */
+.experience-item hr {
+    border: 0;
+    border-top: 1px dashed #e0e0e0; /* Linha tracejada para separação interna */
+    margin: 20px 0;
+}
+
+/* Estilo para o checkbox "Atual" e seu label */
+.current-job-checkbox {
+    width: auto; /* Para não ocupar 100% da largura */
+    margin-right: 5px; /* Espaço entre o checkbox e o texto "Atual" */
+    vertical-align: middle; /* Alinha verticalmente com o texto */
+}
