@@ -1,3 +1,5 @@
+// chrome-extension/popup/popup.js
+
 // Variável global para gerar IDs únicos para os blocos de experiência e outras seções dinâmicas.
 let dynamicBlockCounter = 0;
 
@@ -17,10 +19,14 @@ function showTab(tabIdToShow) {
         content.classList.remove('active');
     });
 
-    const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`; 
+    // Esta é a linha onde o erro "tabIdToShowreplace is not defined" estava ocorrendo.
+    // O ponto '.' entre 'tabIdToShow' e 'replace' é crucial.
+    const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`;
     const tabButton = document.getElementById(tabButtonId);
     const tabContent = document.getElementById(tabIdToShow);
 
+    // As verificações 'if (elemento)' evitam o erro "Cannot read properties of null"
+    // caso o elemento não seja encontrado por algum motivo (ex: ID errado no HTML).
     if (tabButton) {
         tabButton.classList.add('active');
     } else {
@@ -49,6 +55,7 @@ function createExperienceBlock(experience = {}) {
     const cargo = experience.cargo || '';
     const empresa = experience.empresa || '';
     const dataInicio = experience.dataInicio || '';
+    // Corrigido aqui: o nome da propriedade era 'dataFihm' no código anterior.
     const dataFim = experience.dataFim === 'Atual' ? '' : (experience.dataFim || '');
     const isAtual = experience.dataFim === 'Atual' || experience.isAtual || false;
 
@@ -159,7 +166,7 @@ async function saveAllData() {
         fullName: document.getElementById('fullName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
-        address: document.getElementById('address').value.trim()
+        address: document.getElementById('address').trim()
     };
 
     if (!personalData.email || !personalData.email.includes('@') || !personalData.email.includes('.')) {
@@ -252,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Ativa a aba de currículo por padrão ao carregar
-    showTab('resumeContent'); // Esta chamada agora está segura dentro do DOMContentLoaded
+    showTab('resumeContent');
 
 
     // --- Eventos do Formulário de Currículo ---
