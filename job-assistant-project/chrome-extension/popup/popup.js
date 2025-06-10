@@ -1,5 +1,6 @@
 // Variável global para gerar IDs únicos para os blocos de experiência.
 let experienceCounter = 0;
+import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
 
 function createExperienceBlock(experience = {}) {
     experienceCounter++; 
