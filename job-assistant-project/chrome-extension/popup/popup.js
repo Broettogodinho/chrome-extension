@@ -1,5 +1,3 @@
-// chrome-extension/popup/popup.js
-
 // Variável global para gerar IDs únicos para os blocos de experiência e outras seções dinâmicas.
 let dynamicBlockCounter = 0;
 
@@ -19,9 +17,7 @@ function showTab(tabIdToShow) {
         content.classList.remove('active');
     });
 
-    // CORREÇÃO: Certifique-se de que há um PONTO entre 'tabIdToShow' e 'replace'
-    // A linha original 'document.getElementById(`tab${tabIdToShowreplace('Content', '')}`);' estava com erro
-    const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`; // Corrigido o erro de digitação
+    const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`; 
     const tabButton = document.getElementById(tabButtonId);
     const tabContent = document.getElementById(tabIdToShow);
 
@@ -80,7 +76,6 @@ function createExperienceBlock(experience = {}) {
         <hr>
     `;
 
-    // --- Adição de Listeners para o Bloco Criado ---
     const removeBtn = experienceDiv.querySelector('.remove-experience-btn');
     removeBtn.addEventListener('click', () => {
         experienceDiv.remove();
@@ -261,7 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Eventos do Formulário de Currículo ---
-    // CORREÇÃO: Corrigido o ID do formulário 'rsumeForms' para 'resumeForm'
     const resumeForm = document.getElementById('resumeForm');
     if (resumeForm) {
         resumeForm.addEventListener('submit', async (event) => {
