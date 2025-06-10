@@ -5,9 +5,8 @@
 let experienceCounter = 0;
 
 /**
- * Cria e retorna um elemento HTML (div) que representa um único bloco de experiência profissional.
+ 
  * @param {object} experience - Opcional. Um objeto contendo dados de experiência existentes para preencher os campos.
- * Esperado ter as propriedades: cargo, empresa, dataInicio, dataFim, descricao.
  * @returns {HTMLDivElement} O elemento div do bloco de experiência criado.
  */
 function createExperienceBlock(experience = {}) {
