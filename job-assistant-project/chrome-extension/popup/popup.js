@@ -1,20 +1,12 @@
-// popup/popup.js
-
 // Variável global para gerar IDs únicos para os blocos de experiência.
-// Isso é útil para gerenciar múltiplos blocos de experiência na interface.
 let experienceCounter = 0;
 
-/**
- 
- * @param {object} experience - Opcional. Um objeto contendo dados de experiência existentes para preencher os campos.
- * @returns {HTMLDivElement} O elemento div do bloco de experiência criado.
- */
 function createExperienceBlock(experience = {}) {
-    experienceCounter++; // Incrementa o contador para garantir um ID único para este novo bloco
+    experienceCounter++; 
 
     const experienceDiv = document.createElement('div');
-    experienceDiv.classList.add('experience-item'); // Adiciona uma classe para estilização e fácil seleção
-    experienceDiv.dataset.id = experienceCounter; // Armazena um ID único no próprio elemento para referência
+    experienceDiv.classList.add('experience-item'); 
+    experienceDiv.dataset.id = experienceCounter; 
 
     experienceDiv.innerHTML = `
         <h3>Experiência #${experienceCounter}</h3>
@@ -37,13 +29,13 @@ function createExperienceBlock(experience = {}) {
         <button type="button" class="remove-experience-btn">Remover</button>
         <hr> `;
 
-    // --- Anexa Listeners de Eventos aos elementos recém-criados ---
-    // Isso é crucial porque esses elementos são adicionados ao DOM dinamicamente.
+   
+    
 
     // Listener para o botão "Remover"
     const removeBtn = experienceDiv.querySelector('.remove-experience-btn');
     removeBtn.addEventListener('click', () => {
-        experienceDiv.remove(); // Remove o bloco de experiência inteiro do DOM
+        experienceDiv.remove(); 
     });
 
     // Listener para o checkbox "Atual" (desabilita/habilita o campo de Data de Fim)
@@ -52,26 +44,22 @@ function createExperienceBlock(experience = {}) {
 
     currentJobCheckbox.addEventListener('change', () => {
         if (currentJobCheckbox.checked) {
-            endDateInput.value = ''; // Limpa o campo de data se "Atual" for marcado
-            endDateInput.disabled = true; // Desabilita o campo de data
+            endDateInput.value = ''; 
+            endDateInput.disabled = true; 
         } else {
-            endDateInput.disabled = false; // Habilita o campo de data
+            endDateInput.disabled = false; 
         }
     });
 
     // Inicializa o estado do campo de Data de Fim com base no checkbox "Atual",
-    // importante ao carregar dados existentes onde "Atual" estava marcado.
+    
     if (currentJobCheckbox.checked) {
         endDateInput.disabled = true;
     }
 
-    return experienceDiv; // Retorna o elemento div completo
+    return experienceDiv;
 }
 
-/**
- * Carrega todos os dados do currículo (informações pessoais e experiências profissionais)
- * de chrome.storage.local e preenche os campos do formulário do pop-up.
- */
 async function loadResumeData() {
     try {
         const result = await chrome.storage.local.get('userResume');
@@ -86,8 +74,8 @@ async function loadResumeData() {
 
         // 2. Carrega Experiências Profissionais
         const experiencesContainer = document.getElementById('experiencesContainer');
-        experiencesContainer.innerHTML = ''; // Limpa quaisquer blocos dinâmicos existentes antes de carregar
-        experienceCounter = 0; // Reinicia o contador para um carregamento "limpo"
+        experiencesContainer.innerHTML = ''; 
+        experienceCounter = 0; 
 
         if (userResume.experience && Array.isArray(userResume.experience)) {
             userResume.experience.forEach(exp => {
@@ -105,11 +93,6 @@ async function loadResumeData() {
     }
 }
 
-/**
- * Coleta todos os dados do currículo (informações pessoais e experiências profissionais)
- * dos campos do formulário do pop-up e os salva em chrome.storage.local.
- * @returns {boolean} True se os dados foram salvos com sucesso, false caso contrário.
- */
 async function saveResumeData() {
     // 1. Coleta Dados Pessoais
     const personalData = {
@@ -163,11 +146,11 @@ async function saveResumeData() {
 
         // Atualiza as seções pessoal e de experiência do objeto userResume
         userResume.personal = personalData;
-        userResume.experience = experiences; // Atribui o array de experiências coletadas
+        userResume.experience = experiences; 
 
         // Salva o objeto userResume completo de volta em chrome.storage.local
         await chrome.storage.local.set({ 'userResume': userResume });
-        alert('Currículo salvo com sucesso!'); // Feedback para o usuário
+        alert('Currículo salvo com sucesso!'); 
         return true;
     } catch (error) {
         console.error('Erro ao salvar currículo:', error);
@@ -176,8 +159,8 @@ async function saveResumeData() {
     }
 }
 
-// --- Listener para o evento DOMContentLoaded ---
-// Garante que o script só seja executado depois que todo o documento HTML estiver totalmente carregado.
+// Listener para o evento DOMContentLoaded 
+
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega todos os dados do currículo (pessoais e experiências) quando o pop-up é aberto
     loadResumeData();
@@ -189,8 +172,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Listener de evento para o envio do formulário (botão "Salvar Currículo")
     resumeForm.addEventListener('submit', async (event) => {
-        event.preventDefault(); // Impede o comportamento padrão de envio do formulário (que recarregaria o pop-up)
-        await saveResumeData(); // Chama nossa função assíncrona para salvar
+        event.preventDefault();
+        await saveResumeData(); 
     });
 
     // Listener de evento para o botão "Adicionar Experiência"
