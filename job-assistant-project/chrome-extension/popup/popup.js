@@ -9,6 +9,7 @@ import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
  * @param {string} tabIdToShow - O ID do conteúdo da aba a ser exibido (ex: 'resumeContent', 'financeContent').
  */
 function showTab(tabIdToShow) {
+    // Garante que todos os botões e conteúdos de aba sejam desativados primeiro
     document.querySelectorAll('.tab-button').forEach(button => {
         button.classList.remove('active');
     });
@@ -16,7 +17,86 @@ function showTab(tabIdToShow) {
         content.classList.remove('active');
     });
 
-    document.getElementById(`tab${tabIdToShow.replace('Content', '')}`).classList.add('active'); // Ex: 'tabResume', 'tabFinance'
+    // Adiciona verificações para garantir que os elementos existem antes de tentar manipular
+    const tabButton = document.getElementById(`tab${tabIdToShowreplace('Content', '')}`);
+    const tabContent = document.getElementById(tabIdToShow);
+
+    if (tabButton) {
+        tabButton.classList.add('active');
+    } else {
+        console.error(`Erro: Botão de aba com ID 'tab${tabIdToShow.replace('Content', '')}' não encontrado no HTML.`);
+    }
+
+    if (tabContent) {
+        tabContent.classList.add('active');
+    } else {
+        console.error(`Erro:Conteúdo de aba com ID '${tabIdToShow}' não encontrado no HTML.`)
+    }
+
+    // Listener para o evento DOMContentLoader
+    document.addEventListener('DOMContentLoaded', () =>{
+        //carrega todos os dados quando o pop-up é aberto
+        loadAllData();
+
+        // gerenciamento de abas
+        const tabResumeButton = document.getElementById('tabResume');
+        const tabFinanceButton = document.getElementById('tabFinance')
+
+        //verifica se os botões existem antes de adicionar o listeners
+        if (tabResumeButton) {
+            tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
+        } else {
+            console.error("Erro: Botão 'tabResume' não encontrado para adicionar listener!");
+        }
+
+        if (tabFinanceButton) {
+            tabFinanceButton.addEventListener('click', () => showTab('financeContent'));
+        } else {
+            console.error("Erro: Botão 'tabFinance' não encontrado para adicionar listener!");
+        }
+
+        // ativa a aba de CV por padrão ao carregar
+        // chamada segura dentro do DOMContentLoaded
+        showTab('resumeContent');
+
+        // eventos dos forms
+        const resumeForm = document.getElementById('rsumeForms');
+        if (resumeForm) {
+            resumeForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                await saveAllData();
+            });
+        } else {
+            console.error("Erro: Formulário 'resumeForm' não encontrado para adicionar listener!");
+        
+    }
+        const addExperienceBtn = document.getElementById('addExperienceBtn');
+        if (addExperienceBtn) {
+            addExperienceBtn.addEventListener('click', () =>{
+                const experiencesContainer = document.getElementById('experiencesContainer');
+                if (experiencesContainer) { // verificar tambem o container de experiencias
+                     experiencesContainer.appendChild(createExperienceBlock());
+                } else {
+                    console.error("Erro: Container de experiências 'experiencesContainer' não encontrado!")
+                }
+            });
+        } else {
+            console.error("Erro: Botão 'addExperienceBtn' não encontrado para adicionar listener!");
+        }
+        
+        const financeForm = document.getElementById('financeForm');
+        if(financeForm) {
+            financeForm.addEventListener('submit', async (event) =>{
+                event.preventDefault();
+                await saveAllData();
+                alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
+            });
+        } else {
+            console.error("Erro: Formulário 'financeForm' não encontrado para adicionar listener!");
+        }
+    });
+
+    document.getElementById(`tab${tabIdToShow.replace('Content', '')}`).classList.add('active'); 
     document.getElementById(tabIdToShow).classList.add('active');
 }
 
