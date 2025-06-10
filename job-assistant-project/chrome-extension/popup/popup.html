@@ -3,40 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <title>Assistente de Candidaturas</title>
-
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <h1>Meu Currículo</h1>
-  <form id="resumeForm">
-    <label for="fullName">Nome Completo:</label>
-    <input type="text" id="fullName" name="fullName" required><br><br>
+  <nav class="tabs">
+    <button id="tabResume" class="tab-button active">Currículo</button>
+    <button id="tabFinance" class="tab-button">CLT vs PJ</button>
+  </nav>
 
-    <label for="email">Email:</label>
-    <input type="email" id="email" name="email" required><br><br>
+  <div id="resumeContent" class="tab-content active">
+    <h1>Meu Currículo</h1>
+    <form id="resumeForm">
+      <section id="personalInfoSection">
+          <h2>Informações Pessoais</h2>
+          <label for="fullName">Nome Completo:</label>
+          <input type="text" id="fullName" name="fullName" required><br><br>
 
-    <label for="phone">Telefone:</label>
-    <input type="tel" id="phone" name="phone"><br><br>
+          <label for="email">Email:</label>
+          <input type="email" id="email" name="email" required><br><br>
 
-    <label for="address">Endereço:</label>
-    <textarea id="address" name="address" rows="3"></textarea><br><br>
+          <label for="phone">Telefone:</label>
+          <input type="tel" id="phone" name="phone"><br><br>
 
+          <label for="address">Endereço:</label>
+          <textarea id="address" name="address" rows="3"></textarea><br><br>
+      </section>
 
-    <h2>Experiências Profissionais</h2>
-    <div id="experiencesContainer">
-      </div>
-    <button type="button" id="addExperienceBtn">Adicionar Experiência</button>
-    <br><br>
+      <section id="experienceSection">
+          <h2>Experiências Profissionais</h2>
+          <div id="experiencesContainer">
+              </div>
+          <button type="button" id="addExperienceBtn">Adicionar Experiência</button>
+      </section>
 
+      <button type="submit" id="saveResumeBtn">Salvar Currículo</button>
+    </form>
+  </div>
 
-    <button type="submit" id="saveResumeBtn">Salvar Currículo</button>
-  </form>
+  <div id="financeContent" class="tab-content">
+    <h1>Comparação CLT vs PJ</h1>
+    <form id="financeForm">
+      <section>
+        <h2>Dados CLT</h2>
+        <label for="salaryClt">Salário Bruto CLT (mensal):</label>
+        <input type="number" id="salaryClt" name="salaryClt" step="0.01" min="0" value="0"><br><br>
 
-   <script type="module" src="popup.js"></script> </body>
+        <label for="vrClt">Vale Refeição/Alimentação (mensal):</label>
+        <input type="number" id="vrClt" name="vrClt" step="0.01" min="0" value="0"><br><br>
+
+        <label for="healthPlanClt">Plano de Saúde CLT (mensal, parte paga por você):</label>
+        <input type="number" id="healthPlanClt" name="healthPlanClt" step="0.01" min="0" value="0"><br><br>
+
+        <h3>Benefícios Anuais (para base de cálculo)</h3>
+        <label for="annualGrossSalaryClt">Salário Bruto Anual (Base para 13º/Férias):</label>
+        <input type="number" id="annualGrossSalaryClt" name="annualGrossSalaryClt" step="0.01" min="0" value="0"><br><br>
+
+        <label for="bonusClt">Outros Bônus / Premiações Anuais (CLT):</label>
+        <input type="number" id="bonusClt" name="bonusClt" step="0.01" min="0" value="0"><br><br>
+
+        <label for="timeInCompanyYearsClt">Estimativa de Tempo na Empresa (anos):</label>
+        <input type="number" id="timeInCompanyYearsClt" name="timeInCompanyYearsClt" min="0" value="1"><br><br>
+      </section>
+
+      <section>
+        <h2>Dados PJ</h2>
+        <label for="salaryPj">Salário Bruto PJ (mensal - Pró-Labore/Retirada):</label>
+        <input type="number" id="salaryPj" name="salaryPj" step="0.01" min="0" value="0"><br><br>
+
+        <label for="accountantCostPj">Custos PJ - Contador (mensal):</label>
+        <input type="number" id="accountantCostPj" name="accountantCostPj" step="0.01" min="0" value="0"><br><br>
+
+        <label for="taxesPjPercent">Custos PJ - Impostos (%) Inicial:</label>
+        <input type="number" id="taxesPjPercent" name="taxesPjPercent" step="0.01" min="0" max="100" value="6"><br><br>
+
+        <label for="healthPlanPj">Plano de Saúde PJ (mensal):</label>
+        <input type="number" id="healthPlanPj" name="healthPlanPj" step="0.01" min="0" value="0"><br><br>
+
+        <label for="bonusPj">Outros Bônus / Premiações Anuais (PJ):</label>
+        <input type="number" id="bonusPj" name="bonusPj" step="0.01" min="0" value="0"><br><br>
+      </section>
+
+      <button type="submit" id="calculateBtn">Calcular Comparação</button>
+    </form>
+  </div>
+
+  <script type="module" src="popup.js"></script>
 </body>
-
 </html>
-
-</html>
-<!--meu amigo-->
-

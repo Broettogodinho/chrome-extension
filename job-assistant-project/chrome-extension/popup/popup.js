@@ -1,8 +1,24 @@
-// Variável global para gerar IDs únicos para os blocos de experiência.
-let experienceCounter = 0;
+// Variável global para gerar IDs únicos para os blocos de experiência e outras seções dinâmicas.
+let dynamicBlockCounter = 0; // Renomeado de experienceCounter para ser mais genérico
 
 // Importa as funções do nosso gerenciador de armazenamento centralizado.
 import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
+
+/**
+ * Alterna a visibilidade das abas no pop-up.
+ * @param {string} tabIdToShow - O ID do conteúdo da aba a ser exibido (ex: 'resumeContent', 'financeContent').
+ */
+function showTab(tabIdToShow) {
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    document.getElementById(`tab${tabIdToShow.replace('Content', '')}`).classList.add('active'); // Ex: 'tabResume', 'tabFinance'
+    document.getElementById(tabIdToShow).classList.add('active');
+}
 
 /**
  * Cria e retorna um novo bloco HTML para uma experiência profissional.
@@ -10,57 +26,61 @@ import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
  * @returns {HTMLElement} O elemento <div> que representa o bloco da experiência.
  */
 function createExperienceBlock(experience = {}) {
-    experienceCounter++; // Incrementa para um novo ID único para o bloco
+    dynamicBlockCounter++;
 
     const experienceDiv = document.createElement('div');
     experienceDiv.classList.add('experience-item');
-    experienceDiv.dataset.id = experienceCounter; // Armazena o ID no dataset do elemento
+    experienceDiv.dataset.id = dynamicBlockCounter; 
 
     // Usa operadores OR para garantir string vazia se o valor não existir no objeto experience
+    const cargo = experience.cargo || '';
+    const empresa = experience.empresa || '';
+    const dataInicio = experience.dataInicio || '';
+    const dataFim = experience.dataFim === 'Atual' ? '' : (experience.dataFim || '');
+    const isAtual = experience.dataFim === 'Atual' || experience.isAtual || false; 
+
+    const descricao = experience.descricao || '';
+
     experienceDiv.innerHTML = `
-        <h3>Experiência #${experienceCounter}</h3>
-        <label for="jobTitle-${experienceCounter}">Cargo:</label>
-        <input type="text" id="jobTitle-${experienceCounter}" class="job-title" value="${experience.cargo || ''}" required><br><br>
+        <h3>Experiência #${dynamicBlockCounter}</h3>
+        <label for="jobTitle-${dynamicBlockCounter}">Cargo:</label>
+        <input type="text" id="jobTitle-${dynamicBlockCounter}" class="job-title" value="${cargo}" required><br><br>
 
-        <label for="company-${experienceCounter}">Empresa:</label>
-        <input type="text" id="company-${experienceCounter}" class="company" value="${experience.empresa || ''}" required><br><br>
+        <label for="company-${dynamicBlockCounter}">Empresa:</label>
+        <input type="text" id="company-${dynamicBlockCounter}" class="company" value="${empresa}" required><br><br>
 
-        <label for="startDate-${experienceCounter}">Data de Início (MM/AAAA):</label>
-        <input type="month" id="startDate-${experienceCounter}" class="start-date" value="${experience.dataInicio || ''}"><br><br>
+        <label for="startDate-${dynamicBlockCounter}">Data de Início (MM/AAAA):</label>
+        <input type="month" id="startDate-${dynamicBlockCounter}" class="start-date" value="${dataInicio}"><br><br>
 
-        <label for="endDate-${experienceCounter}">Data de Fim (MM/AAAA):</label>
-        <input type="month" id="endDate-${experienceCounter}" class="end-date" value="${experience.dataFim === 'Atual' ? '' : (experience.dataFim || '')}">
-        <input type="checkbox" id="currentJob-${experienceCounter}" class="current-job-checkbox" ${experience.dataFim === 'Atual' ? 'checked' : ''}> Atual<br><br>
+        <label for="endDate-${dynamicBlockCounter}">Data de Fim (MM/AAAA):</label>
+        <input type="month" id="endDate-${dynamicBlockCounter}" class="end-date" value="${dataFim}" ${isAtual ? 'disabled' : ''}>
+        <input type="checkbox" id="currentJob-${dynamicBlockCounter}" class="current-job-checkbox" ${isAtual ? 'checked' : ''}> Atual<br><br>
 
-        <label for="description-${experienceCounter}">Descrição das Atividades:</label>
-        <textarea id="description-${experienceCounter}" class="description" rows="4">${experience.descricao || ''}</textarea><br><br>
+        <label for="description-${dynamicBlockCounter}">Descrição das Atividades:</label>
+        <textarea id="description-${dynamicBlockCounter}" class="description" rows="4">${descricao}</textarea><br><br>
 
         <button type="button" class="remove-experience-btn">Remover</button>
         <hr>
     `;
 
     // --- Adição de Listeners para o Bloco Criado ---
-
-    // Listener para o botão "Remover"
     const removeBtn = experienceDiv.querySelector('.remove-experience-btn');
     removeBtn.addEventListener('click', () => {
-        experienceDiv.remove(); 
+        experienceDiv.remove();
     });
 
-    // Listener para o checkbox "Atual" (desabilita/habilita o campo de Data de Fim)
-    const currentJobCheckbox = experienceDiv.querySelector(`#currentJob-${experienceCounter}`);
-    const endDateInput = experienceDiv.querySelector(`#endDate-${experienceCounter}`);
+    const currentJobCheckbox = experienceDiv.querySelector(`#currentJob-${dynamicBlockCounter}`);
+    const endDateInput = experienceDiv.querySelector(`#endDate-${dynamicBlockCounter}`);
 
     currentJobCheckbox.addEventListener('change', () => {
         if (currentJobCheckbox.checked) {
-            endDateInput.value = ''; 
-            endDateInput.disabled = true; 
+            endDateInput.value = '';
+            endDateInput.disabled = true;
         } else {
-            endDateInput.disabled = false; 
+            endDateInput.disabled = false;
         }
     });
 
-    // Inicializa o estado do campo de Data de Fim com base no checkbox "Atual" carregado
     if (currentJobCheckbox.checked) {
         endDateInput.disabled = true;
     }
@@ -69,59 +89,71 @@ function createExperienceBlock(experience = {}) {
 }
 
 /**
- * Carrega todos os dados do currículo do armazenamento local e preenche o formulário.
+ * Carrega todos os dados (currículo e financeiros) do armazenamento local e preenche o formulário.
  */
-async function loadResumeData() {
+async function loadAllData() { 
     try {
-        // Usa a função loadUserResume do storageManager.js para carregar
-        const userResume = await loadUserResume();
+        const userResume = await loadUserResume(); 
 
-        // --- 1. Carrega Dados Pessoais ---
+        // --- 1. Carrega Dados Pessoais (da US02) ---
         const personalData = userResume.personal || {};
         document.getElementById('fullName').value = personalData.fullName || '';
         document.getElementById('email').value = personalData.email || '';
         document.getElementById('phone').value = personalData.phone || '';
         document.getElementById('address').value = personalData.address || '';
 
-        // --- 2. Carrega Experiências Profissionais ---
+        // --- 2. Carrega Experiências Profissionais (da US03) ---
         const experiencesContainer = document.getElementById('experiencesContainer');
         experiencesContainer.innerHTML = ''; 
-        experienceCounter = 0; 
+        dynamicBlockCounter = 0; 
 
         if (userResume.experience && Array.isArray(userResume.experience)) {
             userResume.experience.forEach(exp => {
                 experiencesContainer.appendChild(createExperienceBlock(exp));
             });
         }
-
-        // Se nenhuma experiência foi carregada (ex: usuário novo ou array vazio), adiciona um bloco vazio por padrão
+        // Se nenhuma experiência foi carregada (ex: usuário novo ou array vazio), adiciona um bloco vazio
         if (!userResume.experience || userResume.experience.length === 0) {
             experiencesContainer.appendChild(createExperienceBlock());
         }
 
+        // --- 3. Carrega Dados Financeiros ---
+        const financialData = userResume.financial || {}; 
+        document.getElementById('salaryClt').value = financialData.salaryClt || 0;
+        document.getElementById('vrClt').value = financialData.vrClt || 0;
+        document.getElementById('healthPlanClt').value = financialData.healthPlanClt || 0;
+        document.getElementById('annualGrossSalaryClt').value = financialData.annualGrossSalaryClt || 0;
+        document.getElementById('bonusClt').value = financialData.bonusClt || 0;
+        document.getElementById('timeInCompanyYearsClt').value = financialData.timeInCompanyYearsClt || 1;
+
+        document.getElementById('salaryPj').value = financialData.salaryPj || 0;
+        document.getElementById('accountantCostPj').value = financialData.accountantCostPj || 0;
+        document.getElementById('taxesPjPercent').value = financialData.taxesPjPercent || 6;
+        document.getElementById('healthPlanPj').value = financialData.healthPlanPj || 0;
+        document.getElementById('bonusPj').value = financialData.bonusPj || 0;
+
     } catch (error) {
-        console.error('Erro ao carregar currículo no pop-up:', error);
-        alert('Não foi possível carregar o currículo. Tente novamente.');
+        console.error('Erro ao carregar dados:', error);
+        alert('Não foi possível carregar os dados. Tente novamente.');
     }
 }
 
 /**
- * Coleta todos os dados do formulário do currículo e os salva no armazenamento local.
+ * Coleta todos os dados do formulário (currículo e financeiros) e os salva no armazenamento local.
  * @returns {Promise<boolean>} Uma promessa que resolve para true se o salvamento foi bem-sucedido, false caso contrário.
  */
-async function saveResumeData() {
+async function saveAllData() { 
     // --- 1. Coleta Dados Pessoais ---
     const personalData = {
-        fullName: document.getElementById('fullName').value.trim(), // .trim() para remover espaços em branco no início/fim
+        fullName: document.getElementById('fullName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         address: document.getElementById('address').value.trim()
     };
 
-    // Validação básica de e-mail
     if (!personalData.email || !personalData.email.includes('@') || !personalData.email.includes('.')) {
         alert('Por favor, insira um e-mail válido.');
-        return false; 
+        return false;
     }
 
     // --- 2. Coleta Experiências Profissionais ---
@@ -137,13 +169,11 @@ async function saveResumeData() {
         const description = item.querySelector('.description').value.trim();
 
         let endDateValue = endDateInput.value.trim();
-        // Se o checkbox "Atual" estiver marcado, define a data de fim como a string 'Atual'
         if (currentJobCheckbox.checked) {
             endDateValue = 'Atual';
         }
 
-        // Só salva uma experiência se os campos essenciais (Cargo, Empresa, Data de Início) estiverem preenchidos
-        if (jobTitle && company && startDate) {
+        if (jobTitle && company && startDate) { 
             experiences.push({
                 cargo: jobTitle,
                 empresa: company,
@@ -154,47 +184,76 @@ async function saveResumeData() {
         }
     });
 
-    // --- 3. Constrói o Objeto userResume Completo ---
-    // Começa com o objeto userResume carregado (se houver) para preservar outras seções
-    const userResume = await loadUserResume(); 
+    // --- 3. Coleta Dados Financeiros ---
+    const financialData = {
+        salaryClt: parseFloat(document.getElementById('salaryClt').value) || 0,
+        vrClt: parseFloat(document.getElementById('vrClt').value) || 0,
+        healthPlanClt: parseFloat(document.getElementById('healthPlanClt').value) || 0,
+        annualGrossSalaryClt: parseFloat(document.getElementById('annualGrossSalaryClt').value) || 0,
+        bonusClt: parseFloat(document.getElementById('bonusClt').value) || 0,
+        timeInCompanyYearsClt: parseFloat(document.getElementById('timeInCompanyYearsClt').value) || 1,
+
+        salaryPj: parseFloat(document.getElementById('salaryPj').value) || 0,
+        accountantCostPj: parseFloat(document.getElementById('accountantCostPj').value) || 0,
+        taxesPjPercent: parseFloat(document.getElementById('taxesPjPercent').value) || 6,
+        healthPlanPj: parseFloat(document.getElementById('healthPlanPj').value) || 0,
+        bonusPj: parseFloat(document.getElementById('bonusPj').value) || 0
+    };
+
+    // --- 4. Constrói o Objeto userResume Completo ---
+    const userResume = await loadUserResume();
 
     userResume.personal = personalData;
     userResume.experience = experiences;
-    // userResume.education = ...; // (Será adicionado posteriormente)
-    // userResume.skills = ...;    // (Será adicionado posteriormente)
-    // userResume.coverLetter = ...; // (Será adicionado posteriormente)
+    userResume.financial = financialData; 
+
+    // userResume.education = ...;
+    // userResume.skills = ...;
+    // userResume.coverLetter = ...;
 
     try {
-        // Usa a função saveUserResume do storageManager.js para salvar o objeto userResume completo
-        await saveUserResume(userResume);
-        alert('Currículo salvo com sucesso!');
+        await saveUserResume(userResume); 
+        alert('Dados salvos com sucesso!');
         return true;
     } catch (error) {
-        console.error('Erro ao salvar currículo no pop-up:', error);
-        alert('Ocorreu um erro ao salvar o currículo. Verifique o console para mais detalhes.');
+        console.error('Erro ao salvar dados:', error);
+        alert('Ocorreu um erro ao salvar os dados. Verifique o console para mais detalhes.');
         return false;
     }
 }
 
+
 // --- Listener para o Evento DOMContentLoaded ---
-// Garante que o script só execute depois que o DOM do pop-up estiver completamente carregado.
 document.addEventListener('DOMContentLoaded', () => {
-    // Carrega todos os dados do currículo (pessoais e experiências) quando o pop-up é aberto
-    loadResumeData();
+    // Carrega todos os dados (currículo e financeiros) quando o pop-up é aberto
+    loadAllData();
 
-    // Obtém referências aos elementos do DOM
+    // --- Gerenciamento de Abas ---
+    document.getElementById('tabResume').addEventListener('click', () => showTab('resumeContent'));
+    document.getElementById('tabFinance').addEventListener('click', () => showTab('financeContent'));
+    // Ativa a aba de currículo por padrão ao carregar
+    showTab('resumeContent');
+
+
+    // --- Eventos do Formulário de Currículo ---
     const resumeForm = document.getElementById('resumeForm');
-    const addExperienceBtn = document.getElementById('addExperienceBtn'); // Certifique-se de que este botão existe no seu popup.html
-
-    // Listener de evento para o envio do formulário (botão "Salvar Currículo")
-       resumeForm.addEventListener('submit', async (event) => {
+    resumeForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        await saveResumeData();
+        await saveAllData(); 
     });
 
-    // Listener de evento para o botão "Adicionar Experiência"
+    // Evento para adicionar nova experiência
+    const addExperienceBtn = document.getElementById('addExperienceBtn');
     addExperienceBtn.addEventListener('click', () => {
         const experiencesContainer = document.getElementById('experiencesContainer');
         experiencesContainer.appendChild(createExperienceBlock());
+    });
+
+    // --- Evento do Formulário Financeiro ---
+    const financeForm = document.getElementById('financeForm');
+    financeForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        await saveAllData(); 
+        alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
     });
 });
