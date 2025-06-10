@@ -1,5 +1,7 @@
+// chrome-extension/popup/popup.js
+
 // Variável global para gerar IDs únicos para os blocos de experiência e outras seções dinâmicas.
-let dynamicBlockCounter = 0; // Renomeado de experienceCounter para ser mais genérico
+let dynamicBlockCounter = 0;
 
 // Importa as funções do nosso gerenciador de armazenamento centralizado.
 import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
@@ -17,87 +19,23 @@ function showTab(tabIdToShow) {
         content.classList.remove('active');
     });
 
-    // Adiciona verificações para garantir que os elementos existem antes de tentar manipular
-    const tabButton = document.getElementById(`tab${tabIdToShowreplace('Content', '')}`);
+    // CORREÇÃO: Certifique-se de que há um PONTO entre 'tabIdToShow' e 'replace'
+    // A linha original 'document.getElementById(`tab${tabIdToShowreplace('Content', '')}`);' estava com erro
+    const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`; // Corrigido o erro de digitação
+    const tabButton = document.getElementById(tabButtonId);
     const tabContent = document.getElementById(tabIdToShow);
 
     if (tabButton) {
         tabButton.classList.add('active');
     } else {
-        console.error(`Erro: Botão de aba com ID 'tab${tabIdToShow.replace('Content', '')}' não encontrado no HTML.`);
+        console.error(`Erro: Botão de aba com ID '${tabButtonId}' não encontrado no HTML.`);
     }
 
     if (tabContent) {
         tabContent.classList.add('active');
     } else {
-        console.error(`Erro:Conteúdo de aba com ID '${tabIdToShow}' não encontrado no HTML.`)
+        console.error(`Erro: Conteúdo de aba com ID '${tabIdToShow}' não encontrado no HTML.`);
     }
-
-    // Listener para o evento DOMContentLoader
-    document.addEventListener('DOMContentLoaded', () =>{
-        //carrega todos os dados quando o pop-up é aberto
-        loadAllData();
-
-        // gerenciamento de abas
-        const tabResumeButton = document.getElementById('tabResume');
-        const tabFinanceButton = document.getElementById('tabFinance')
-
-        //verifica se os botões existem antes de adicionar o listeners
-        if (tabResumeButton) {
-            tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
-        } else {
-            console.error("Erro: Botão 'tabResume' não encontrado para adicionar listener!");
-        }
-
-        if (tabFinanceButton) {
-            tabFinanceButton.addEventListener('click', () => showTab('financeContent'));
-        } else {
-            console.error("Erro: Botão 'tabFinance' não encontrado para adicionar listener!");
-        }
-
-        // ativa a aba de CV por padrão ao carregar
-        // chamada segura dentro do DOMContentLoaded
-        showTab('resumeContent');
-
-        // eventos dos forms
-        const resumeForm = document.getElementById('rsumeForms');
-        if (resumeForm) {
-            resumeForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                await saveAllData();
-            });
-        } else {
-            console.error("Erro: Formulário 'resumeForm' não encontrado para adicionar listener!");
-        
-    }
-        const addExperienceBtn = document.getElementById('addExperienceBtn');
-        if (addExperienceBtn) {
-            addExperienceBtn.addEventListener('click', () =>{
-                const experiencesContainer = document.getElementById('experiencesContainer');
-                if (experiencesContainer) { // verificar tambem o container de experiencias
-                     experiencesContainer.appendChild(createExperienceBlock());
-                } else {
-                    console.error("Erro: Container de experiências 'experiencesContainer' não encontrado!")
-                }
-            });
-        } else {
-            console.error("Erro: Botão 'addExperienceBtn' não encontrado para adicionar listener!");
-        }
-        
-        const financeForm = document.getElementById('financeForm');
-        if(financeForm) {
-            financeForm.addEventListener('submit', async (event) =>{
-                event.preventDefault();
-                await saveAllData();
-                alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
-            });
-        } else {
-            console.error("Erro: Formulário 'financeForm' não encontrado para adicionar listener!");
-        }
-    });
-
-    document.getElementById(`tab${tabIdToShow.replace('Content', '')}`).classList.add('active'); 
-    document.getElementById(tabIdToShow).classList.add('active');
 }
 
 /**
@@ -110,14 +48,13 @@ function createExperienceBlock(experience = {}) {
 
     const experienceDiv = document.createElement('div');
     experienceDiv.classList.add('experience-item');
-    experienceDiv.dataset.id = dynamicBlockCounter; 
+    experienceDiv.dataset.id = dynamicBlockCounter;
 
-    // Usa operadores OR para garantir string vazia se o valor não existir no objeto experience
     const cargo = experience.cargo || '';
     const empresa = experience.empresa || '';
     const dataInicio = experience.dataInicio || '';
     const dataFim = experience.dataFim === 'Atual' ? '' : (experience.dataFim || '');
-    const isAtual = experience.dataFim === 'Atual' || experience.isAtual || false; 
+    const isAtual = experience.dataFim === 'Atual' || experience.isAtual || false;
 
     const descricao = experience.descricao || '';
 
@@ -171,9 +108,9 @@ function createExperienceBlock(experience = {}) {
 /**
  * Carrega todos os dados (currículo e financeiros) do armazenamento local e preenche o formulário.
  */
-async function loadAllData() { 
+async function loadAllData() {
     try {
-        const userResume = await loadUserResume(); 
+        const userResume = await loadUserResume();
 
         // --- 1. Carrega Dados Pessoais (da US02) ---
         const personalData = userResume.personal || {};
@@ -184,21 +121,20 @@ async function loadAllData() {
 
         // --- 2. Carrega Experiências Profissionais (da US03) ---
         const experiencesContainer = document.getElementById('experiencesContainer');
-        experiencesContainer.innerHTML = ''; 
-        dynamicBlockCounter = 0; 
+        experiencesContainer.innerHTML = '';
+        dynamicBlockCounter = 0; // Reinicia o contador para IDs únicos ao recarregar a seção
 
         if (userResume.experience && Array.isArray(userResume.experience)) {
             userResume.experience.forEach(exp => {
                 experiencesContainer.appendChild(createExperienceBlock(exp));
             });
         }
-        // Se nenhuma experiência foi carregada (ex: usuário novo ou array vazio), adiciona um bloco vazio
         if (!userResume.experience || userResume.experience.length === 0) {
             experiencesContainer.appendChild(createExperienceBlock());
         }
 
         // --- 3. Carrega Dados Financeiros ---
-        const financialData = userResume.financial || {}; 
+        const financialData = userResume.financial || {};
         document.getElementById('salaryClt').value = financialData.salaryClt || 0;
         document.getElementById('vrClt').value = financialData.vrClt || 0;
         document.getElementById('healthPlanClt').value = financialData.healthPlanClt || 0;
@@ -222,7 +158,7 @@ async function loadAllData() {
  * Coleta todos os dados do formulário (currículo e financeiros) e os salva no armazenamento local.
  * @returns {Promise<boolean>} Uma promessa que resolve para true se o salvamento foi bem-sucedido, false caso contrário.
  */
-async function saveAllData() { 
+async function saveAllData() {
     // --- 1. Coleta Dados Pessoais ---
     const personalData = {
         fullName: document.getElementById('fullName').value.trim(),
@@ -253,7 +189,7 @@ async function saveAllData() {
             endDateValue = 'Atual';
         }
 
-        if (jobTitle && company && startDate) { 
+        if (jobTitle && company && startDate) {
             experiences.push({
                 cargo: jobTitle,
                 empresa: company,
@@ -285,14 +221,10 @@ async function saveAllData() {
 
     userResume.personal = personalData;
     userResume.experience = experiences;
-    userResume.financial = financialData; 
-
-    // userResume.education = ...;
-    // userResume.skills = ...;
-    // userResume.coverLetter = ...;
+    userResume.financial = financialData;
 
     try {
-        await saveUserResume(userResume); 
+        await saveUserResume(userResume);
         alert('Dados salvos com sucesso!');
         return true;
     } catch (error) {
@@ -309,31 +241,61 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
 
     // --- Gerenciamento de Abas ---
-    document.getElementById('tabResume').addEventListener('click', () => showTab('resumeContent'));
-    document.getElementById('tabFinance').addEventListener('click', () => showTab('financeContent'));
+    const tabResumeButton = document.getElementById('tabResume');
+    const tabFinanceButton = document.getElementById('tabFinance');
+
+    if (tabResumeButton) {
+        tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
+    } else {
+        console.error("Erro: Botão 'tabResume' não encontrado para adicionar listener!");
+    }
+
+    if (tabFinanceButton) {
+        tabFinanceButton.addEventListener('click', () => showTab('financeContent'));
+    } else {
+        console.error("Erro: Botão 'tabFinance' não encontrado para adicionar listener!");
+    }
+
     // Ativa a aba de currículo por padrão ao carregar
-    showTab('resumeContent');
+    showTab('resumeContent'); // Esta chamada agora está segura dentro do DOMContentLoaded
 
 
     // --- Eventos do Formulário de Currículo ---
+    // Corrigido o ID do formulário 'rsumeForms' para 'resumeForm'
     const resumeForm = document.getElementById('resumeForm');
-    resumeForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        await saveAllData(); 
-    });
+    if (resumeForm) {
+        resumeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await saveAllData();
+        });
+    } else {
+        console.error("Erro: Formulário 'resumeForm' não encontrado para adicionar listener!");
+    }
 
     // Evento para adicionar nova experiência
     const addExperienceBtn = document.getElementById('addExperienceBtn');
-    addExperienceBtn.addEventListener('click', () => {
-        const experiencesContainer = document.getElementById('experiencesContainer');
-        experiencesContainer.appendChild(createExperienceBlock());
-    });
+    if (addExperienceBtn) {
+        addExperienceBtn.addEventListener('click', () => {
+            const experiencesContainer = document.getElementById('experiencesContainer');
+            if (experiencesContainer) {
+                experiencesContainer.appendChild(createExperienceBlock());
+            } else {
+                console.error("Erro: Container de experiências 'experiencesContainer' não encontrado!");
+            }
+        });
+    } else {
+        console.error("Erro: Botão 'addExperienceBtn' não encontrado para adicionar listener!");
+    }
 
-    // --- Evento do Formulário Financeiro ---
+
     const financeForm = document.getElementById('financeForm');
-    financeForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        await saveAllData(); 
-        alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
-    });
+    if (financeForm) {
+        financeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await saveAllData();
+            alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
+        });
+    } else {
+        console.error("Erro: Formulário 'financeForm' não encontrado para adicionar listener!");
+    }
 });
