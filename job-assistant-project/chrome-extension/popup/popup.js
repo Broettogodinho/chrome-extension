@@ -1,14 +1,22 @@
 // Variável global para gerar IDs únicos para os blocos de experiência.
 let experienceCounter = 0;
+
+// Importa as funções do nosso gerenciador de armazenamento centralizado.
 import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
 
+/**
+ * Cria e retorna um novo bloco HTML para uma experiência profissional.
+ * @param {Object} [experience={}] - Objeto contendo os dados da experiência para preencher os campos.
+ * @returns {HTMLElement} O elemento <div> que representa o bloco da experiência.
+ */
 function createExperienceBlock(experience = {}) {
-    experienceCounter++; 
+    experienceCounter++; // Incrementa para um novo ID único para o bloco
 
     const experienceDiv = document.createElement('div');
-    experienceDiv.classList.add('experience-item'); 
-    experienceDiv.dataset.id = experienceCounter; 
+    experienceDiv.classList.add('experience-item');
+    experienceDiv.dataset.id = experienceCounter; // Armazena o ID no dataset do elemento
 
+    // Usa operadores OR para garantir string vazia se o valor não existir no objeto experience
     experienceDiv.innerHTML = `
         <h3>Experiência #${experienceCounter}</h3>
         <label for="jobTitle-${experienceCounter}">Cargo:</label>
@@ -28,10 +36,10 @@ function createExperienceBlock(experience = {}) {
         <textarea id="description-${experienceCounter}" class="description" rows="4">${experience.descricao || ''}</textarea><br><br>
 
         <button type="button" class="remove-experience-btn">Remover</button>
-        <hr> `;
+        <hr>
+    `;
 
-   
-    
+    // --- Adição de Listeners para o Bloco Criado ---
 
     // Listener para o botão "Remover"
     const removeBtn = experienceDiv.querySelector('.remove-experience-btn');
@@ -52,8 +60,7 @@ function createExperienceBlock(experience = {}) {
         }
     });
 
-    // Inicializa o estado do campo de Data de Fim com base no checkbox "Atual",
-    
+    // Inicializa o estado do campo de Data de Fim com base no checkbox "Atual" carregado
     if (currentJobCheckbox.checked) {
         endDateInput.disabled = true;
     }
@@ -61,19 +68,22 @@ function createExperienceBlock(experience = {}) {
     return experienceDiv;
 }
 
+/**
+ * Carrega todos os dados do currículo do armazenamento local e preenche o formulário.
+ */
 async function loadResumeData() {
     try {
-        const result = await chrome.storage.local.get('userResume');
-        const userResume = result.userResume || {};
+        // Usa a função loadUserResume do storageManager.js para carregar
+        const userResume = await loadUserResume();
 
-        // 1. Carrega Dados Pessoais
+        // --- 1. Carrega Dados Pessoais ---
         const personalData = userResume.personal || {};
         document.getElementById('fullName').value = personalData.fullName || '';
         document.getElementById('email').value = personalData.email || '';
         document.getElementById('phone').value = personalData.phone || '';
         document.getElementById('address').value = personalData.address || '';
 
-        // 2. Carrega Experiências Profissionais
+        // --- 2. Carrega Experiências Profissionais ---
         const experiencesContainer = document.getElementById('experiencesContainer');
         experiencesContainer.innerHTML = ''; 
         experienceCounter = 0; 
@@ -84,45 +94,49 @@ async function loadResumeData() {
             });
         }
 
-        // Se nenhuma experiência foi carregada (ex: usuário novo), adiciona um bloco vazio por padrão
+        // Se nenhuma experiência foi carregada (ex: usuário novo ou array vazio), adiciona um bloco vazio por padrão
         if (!userResume.experience || userResume.experience.length === 0) {
             experiencesContainer.appendChild(createExperienceBlock());
         }
 
     } catch (error) {
-        console.error('Erro ao carregar currículo:', error);
+        console.error('Erro ao carregar currículo no pop-up:', error);
+        alert('Não foi possível carregar o currículo. Tente novamente.');
     }
 }
 
+/**
+ * Coleta todos os dados do formulário do currículo e os salva no armazenamento local.
+ * @returns {Promise<boolean>} Uma promessa que resolve para true se o salvamento foi bem-sucedido, false caso contrário.
+ */
 async function saveResumeData() {
-    // 1. Coleta Dados Pessoais
+    // --- 1. Coleta Dados Pessoais ---
     const personalData = {
-        fullName: document.getElementById('fullName').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        address: document.getElementById('address').value
+        fullName: document.getElementById('fullName').value.trim(), // .trim() para remover espaços em branco no início/fim
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim()
     };
 
     // Validação básica de e-mail
     if (!personalData.email || !personalData.email.includes('@') || !personalData.email.includes('.')) {
         alert('Por favor, insira um e-mail válido.');
-        return false; // Impede o salvamento se o e-mail for inválido
+        return false; 
     }
 
-    // 2. Coleta Experiências Profissionais
+    // --- 2. Coleta Experiências Profissionais ---
     const experiences = [];
-    // Seleciona todos os elementos com a classe 'experience-item' dentro do container
     const experienceItems = document.querySelectorAll('.experience-item');
 
     experienceItems.forEach(item => {
-        const jobTitle = item.querySelector('.job-title').value;
-        const company = item.querySelector('.company').value;
-        const startDate = item.querySelector('.start-date').value;
+        const jobTitle = item.querySelector('.job-title').value.trim();
+        const company = item.querySelector('.company').value.trim();
+        const startDate = item.querySelector('.start-date').value.trim();
         const endDateInput = item.querySelector('.end-date');
         const currentJobCheckbox = item.querySelector('.current-job-checkbox');
-        const description = item.querySelector('.description').value;
+        const description = item.querySelector('.description').value.trim();
 
-        let endDateValue = endDateInput.value;
+        let endDateValue = endDateInput.value.trim();
         // Se o checkbox "Atual" estiver marcado, define a data de fim como a string 'Atual'
         if (currentJobCheckbox.checked) {
             endDateValue = 'Atual';
@@ -140,47 +154,47 @@ async function saveResumeData() {
         }
     });
 
+    // --- 3. Constrói o Objeto userResume Completo ---
+    // Começa com o objeto userResume carregado (se houver) para preservar outras seções
+    const userResume = await loadUserResume(); 
+
+    userResume.personal = personalData;
+    userResume.experience = experiences;
+    // userResume.education = ...; // (Será adicionado posteriormente)
+    // userResume.skills = ...;    // (Será adicionado posteriormente)
+    // userResume.coverLetter = ...; // (Será adicionado posteriormente)
+
     try {
-        // Carrega a estrutura userResume existente para não sobrescrever outras seções, se houver
-        const result = await chrome.storage.local.get('userResume');
-        const userResume = result.userResume || {};
-
-        // Atualiza as seções pessoal e de experiência do objeto userResume
-        userResume.personal = personalData;
-        userResume.experience = experiences; 
-
-        // Salva o objeto userResume completo de volta em chrome.storage.local
-        await chrome.storage.local.set({ 'userResume': userResume });
-        alert('Currículo salvo com sucesso!'); 
+        // Usa a função saveUserResume do storageManager.js para salvar o objeto userResume completo
+        await saveUserResume(userResume);
+        alert('Currículo salvo com sucesso!');
         return true;
     } catch (error) {
-        console.error('Erro ao salvar currículo:', error);
-        alert('Ocorreu um erro ao salvar o currículo.');
+        console.error('Erro ao salvar currículo no pop-up:', error);
+        alert('Ocorreu um erro ao salvar o currículo. Verifique o console para mais detalhes.');
         return false;
     }
 }
 
-// Listener para o evento DOMContentLoaded 
-
+// --- Listener para o Evento DOMContentLoaded ---
+// Garante que o script só execute depois que o DOM do pop-up estiver completamente carregado.
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega todos os dados do currículo (pessoais e experiências) quando o pop-up é aberto
     loadResumeData();
 
-    // Obtém referências ao formulário e ao botão "Adicionar Experiência"
+    // Obtém referências aos elementos do DOM
     const resumeForm = document.getElementById('resumeForm');
-    // Certifique-se de que este botão existe no seu popup.html
-    const addExperienceBtn = document.getElementById('addExperienceBtn'); 
+    const addExperienceBtn = document.getElementById('addExperienceBtn'); // Certifique-se de que este botão existe no seu popup.html
 
     // Listener de evento para o envio do formulário (botão "Salvar Currículo")
-    resumeForm.addEventListener('submit', async (event) => {
+       resumeForm.addEventListener('submit', async (event) => {
         event.preventDefault();
-        await saveResumeData(); 
+        await saveResumeData();
     });
 
     // Listener de evento para o botão "Adicionar Experiência"
     addExperienceBtn.addEventListener('click', () => {
         const experiencesContainer = document.getElementById('experiencesContainer');
-        // Adiciona um novo bloco de experiência vazio ao container
         experiencesContainer.appendChild(createExperienceBlock());
     });
 });
