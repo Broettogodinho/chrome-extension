@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Eventos do Formulário de Currículo ---
-    // Corrigido o ID do formulário 'rsumeForms' para 'resumeForm'
+    // CORREÇÃO: Corrigido o ID do formulário 'rsumeForms' para 'resumeForm'
     const resumeForm = document.getElementById('resumeForm');
     if (resumeForm) {
         resumeForm.addEventListener('submit', async (event) => {
