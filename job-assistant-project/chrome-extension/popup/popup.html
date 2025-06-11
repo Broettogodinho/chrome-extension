@@ -56,13 +56,79 @@
 
         <h3>Benefícios Anuais (para base de cálculo)</h3>
         <label for="annualGrossSalaryClt">Salário Bruto Anual (Base para 13º/Férias):</label>
-        <input type="number" id="annualGrossSalaryClt" name="annualGrossSalaryClt" step="0.01" min="0" value="0"><br><br>
+        <input type="number" id="annualGrossSalaryClt" name="annualGrossSalaryClt" step="0.01" min="0" value="0" readonly><br><br>
         
         <label for="bonusClt">Outros Bônus / Premiações Anuais (CLT):</label>
         <input type="number" id="bonusClt" name="bonusClt" step="0.01" min="0" value="0"><br><br>
         
         <label for="timeInCompanyYearsClt">Estimativa de Tempo na Empresa (anos):</label>
         <input type="number" id="timeInCompanyYearsClt" name="timeInCompanyYearsClt" min="0" value="1"><br><br>
+      </section>
+
+      <section class="results-area"> <h2>Resultados Clt</h2>
+        <div>
+          <label>Salário Bruto Mensal:</label>
+          <span id="resultGrossSalaryClt">R$ 0,00</span>
+        </div><br>
+
+        <div>
+          <label>INSS Mensal:</label>
+          <span id="resultsInssMonthly">R$ 0,00</span>
+        </div><br>
+        <div>
+          <label>INSS Anual:</label>
+          <span id="resultsInssAnnual"> 0,00</span>
+        </div><br>
+        <div>
+          <label>IRRF Mensal:</label>
+          <span id="resultsIrrfMonthly">R$ 0,00</span>
+        </div><br>
+        <div>
+          <label>IRRF Anual:</label>
+          <span id="resultsIrrfAnnual">R$ 0,00</span>
+        </div><br>
+        <div>
+          <label>13º salário Anual:</label>
+          <span id="resultVacation">R$ 0,00</span>
+        </div><br>
+         <div>
+              <label>FGTS (Mensal - pago pela empresa):</label>
+              <span id="resultFgtsMonthly">R$ 0,00</span>
+          </div><br>
+          <div>
+              <label>FGTS (Anual - pago pela empresa):</label>
+              <span id="resultFgtsAnnual">R$ 0,00</span>
+          </div><br>
+
+          <div>
+              <label>Multa Rescisória FGTS (40% - Estimativa Anual):</label>
+              <span id="resultRescissionFine">R$ 0,00</span>
+          </div><br>
+
+          <div>
+              <label>VR/VA (Mensal):</label>
+              <span id="resultVrVa">R$ 0,00</span>
+          </div><br>
+
+          <div>
+              <label>Plano de Saúde (CLT - Mensal):</label>
+              <span id="resultHealthPlanCltOut">R$ 0,00</span>
+          </div><br>
+
+          <div>
+              <label>Bônus / Premiações (Anual):</label>
+              <span id="resultBonusClt">R$ 0,00</span>
+          </div><br>
+
+          <h3>Total Líquido CLT</h3>
+          <div>
+              <label>Líquido Mensal Estimado:</label>
+              <span id="resultNetMonthlyClt">R$ 0,00</span>
+          </div><br>
+          <div>
+              <label>Líquido Anual Estimado:</label>
+              <span id="resultNetAnnualClt">R$ 0,00</span>
+          </div><br>
       </section>
 
       <section>

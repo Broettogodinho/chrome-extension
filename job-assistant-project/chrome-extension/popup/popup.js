@@ -5,6 +5,9 @@ let dynamicBlockCounter = 0;
 
 // Importa as funções do nosso gerenciador de armazenamento centralizado.
 import { saveUserResume, loadUserResume } from '../utils/storageManager.js';
+// Importa a função de cálculo CLT do financialCalculator.js
+import { calculateCltResults } from '../utils/financialCalculator.js';
+
 
 /**
  * Alterna a visibilidade das abas no pop-up.
@@ -19,14 +22,14 @@ function showTab(tabIdToShow) {
         content.classList.remove('active');
     });
 
-    // Esta linha gera IDs como 'tabresume', 'tabfinance'
     const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`;
-    const tabButton = document.getElementById(tabButtonId); // Procura por 'tabresume' ou 'tabfinance'
-    const tabContent = document.getElementById(tabIdToShow); // Procura por 'resumeContent' ou 'financeContent'
+    const tabButton = document.getElementById(tabButtonId);
+    const tabContent = document.getElementById(tabIdToShow);
 
     // Assumimos que os elementos existem e são encontrados agora, após todas as verificações e correções.
-    tabButton.classList.add('active');
-    tabContent.classList.add('active');
+    // Se o problema persistir aqui, é um problema de ambiente/cache muito específico.
+    if (tabButton) tabButton.classList.add('active');
+    if (tabContent) tabContent.classList.add('active');
 }
 
 /**
@@ -128,7 +131,8 @@ async function loadAllData() {
         document.getElementById('salaryClt').value = financialData.salaryClt || 0;
         document.getElementById('vrClt').value = financialData.vrClt || 0;
         document.getElementById('healthPlanClt').value = financialData.healthPlanClt || 0;
-        document.getElementById('annualGrossSalaryClt').value = financialData.annualGrossSalaryClt || 0;
+        // REMOVIDO: O campo annualGrossSalaryClt NÃO SERÁ MAIS CARREGADO DIRETAMENTE, mas recalculado se o mensal existir
+        // document.getElementById('annualGrossSalaryClt').value = financialData.annualGrossSalaryClt || 0;
         document.getElementById('bonusClt').value = financialData.bonusClt || 0;
         document.getElementById('timeInCompanyYearsClt').value = financialData.timeInCompanyYearsClt || 1;
 
@@ -137,6 +141,16 @@ async function loadAllData() {
         document.getElementById('taxesPjPercent').value = financialData.taxesPjPercent || 6;
         document.getElementById('healthPlanPj').value = financialData.healthPlanPj || 0;
         document.getElementById('bonusPj').value = financialData.bonusPj || 0;
+
+        // NOVO: Após carregar o salário CLT mensal, recalcula e exibe o anual.
+        // Isso garante que o campo anual sempre reflita o mensal, mesmo ao carregar.
+        const loadedSalaryClt = parseFloat(document.getElementById('salaryClt').value) || 0;
+        document.getElementById('annualGrossSalaryClt').value = (loadedSalaryClt * 12).toFixed(2); // .toFixed(2) para 2 casas decimais
+
+        // Se houver dados financeiros carregados, exibe os resultados CLT também (se já calculados)
+        if (financialData.cltResults) {
+            displayCltResults(financialData.cltResults);
+        }
 
     } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -154,7 +168,7 @@ async function saveAllData() {
         fullName: document.getElementById('fullName').value.trim(),
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
-        address: document.getElementById('address').trim()
+        address: document.getElementById('address').value.trim()
     };
 
     if (!personalData.email || !personalData.email.includes('@') || !personalData.email.includes('.')) {
@@ -190,11 +204,12 @@ async function saveAllData() {
         }
     });
 
-    // --- 3. Coleta Dados Financeiros ---
+    // --- 3. Coleta Dados Financeiros (AJUSTADO para Salário Anual) ---
     const financialData = {
         salaryClt: parseFloat(document.getElementById('salaryClt').value) || 0,
         vrClt: parseFloat(document.getElementById('vrClt').value) || 0,
         healthPlanClt: parseFloat(document.getElementById('healthPlanClt').value) || 0,
+        // NOVO: annualGrossSalaryClt é pego do DOM, que é atualizado dinamicamente pelo JS.
         annualGrossSalaryClt: parseFloat(document.getElementById('annualGrossSalaryClt').value) || 0,
         bonusClt: parseFloat(document.getElementById('bonusClt').value) || 0,
         timeInCompanyYearsClt: parseFloat(document.getElementById('timeInCompanyYearsClt').value) || 1,
@@ -224,17 +239,56 @@ async function saveAllData() {
     }
 }
 
+/**
+ * Exibe os resultados dos cálculos CLT na interface.
+ * @param {Object} results - Objeto contendo todos os resultados calculados para CLT.
+ */
+function displayCltResults(results) {
+    // Função auxiliar para formatar como moeda BRL
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+    };
+
+    // Preenche os SPANs com os resultados formatados
+    // Adicionei verificações `if (document.getElementById('ID'))` para robustez
+    // (Embora no seu caso o HTML já está validado, isso é uma boa prática)
+    const elementsToUpdate = {
+        'resultGrossSalaryClt': results.grossSalaryClt,
+        'resultInssMonthly': results.inssMonthly,
+        'resultInssAnnual': results.inssAnnual,
+        'resultIrrfMonthly': results.irrfMonthly,
+        'resultIrrfAnnual': results.irrfAnnual,
+        'resultThirteenthSalary': results.thirteenthSalary,
+        'resultVacation': results.vacation,
+        'resultFgtsMonthly': results.fgtsMonthly,
+        'resultFgtsAnnual': results.fgtsAnnual,
+        'resultRescissionFine': results.rescissionFine,
+        'resultVrVa': results.vrVa,
+        'resultHealthPlanCltOut': results.healthPlanCltOut,
+        'resultBonusClt': results.bonusClt,
+        'resultNetMonthlyClt': results.netMonthlyClt,
+        'resultNetAnnualClt': results.netAnnualClt
+    };
+
+    for (const id in elementsToUpdate) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = formatCurrency(elementsToUpdate[id]);
+        } else {
+            console.warn(`Elemento com ID '${id}' não encontrado para exibir resultados CLT.`);
+        }
+    }
+}
+
 
 // --- Listener para o Evento DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega todos os dados (currículo e financeiros) quando o pop-up é aberto
-    loadAllData();
+    loadAllData(); // Esta função agora também atualiza o salário anual ao carregar
 
     // --- Gerenciamento de Abas ---
-    // CORREÇÃO FINAL: Alinhar IDs JavaScript com os IDs em minúsculas do HTML.
-    // Usar os IDs exatamente como estão no HTML: 'tabresume' e 'tabfinance'.
-    const tabResumeButton = document.getElementById('tabresume'); // Corrigido de 'tabResume' para 'tabresume'
-    const tabFinanceButton = document.getElementById('tabfinance'); // Corrigido de 'tabFinance' para 'tabfinance'
+    const tabResumeButton = document.getElementById('tabresume'); // IDs em minúsculas
+    const tabFinanceButton = document.getElementById('tabfinance'); // IDs em minúsculas
 
     // Adiciona event listeners APENAS SE os botões forem encontrados.
     // Isso evita o erro de addEventListener em 'null'.
@@ -251,12 +305,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Ativa a aba de currículo por padrão ao carregar
-    // Esta chamada só causará um erro se 'resumeContent' for null, mas o HTML já validou isso.
     showTab('resumeContent');
 
 
     // --- Eventos dos Formulários ---
-    // Validação de existência para cada elemento antes de adicionar o listener
     const resumeForm = document.getElementById('resumeForm');
     if (resumeForm) {
         resumeForm.addEventListener('submit', async (event) => {
@@ -274,11 +326,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (experiencesContainer) {
                 experiencesContainer.appendChild(createExperienceBlock());
             } else {
-                console.error("Erro CRÍTICO: Container de experiências 'experiencesContainer' não encontrado! Verifique o HTML.");
+                console.error("Erro CRÍTICO: Container de experiências 'experiencesContainer' não encontrado!");
             }
         });
     } else {
-        console.error("Erro CRÍTICO: Botão 'addExperienceBtn' não encontrado! Verifique o HTML.");
+        console.error("Erro CRÍTICO: Botão 'addExperienceBtn' não encontrado para adicionar listener!");
+    }
+
+    // NOVO: Adiciona Listener para Salário Bruto CLT
+    const salaryCltInput = document.getElementById('salaryClt');
+    if (salaryCltInput) { // Adicionado verificação
+        salaryCltInput.addEventListener('input', () => { // Usa 'input' para atualizar em tempo real
+            const monthlySalary = parseFloat(salaryCltInput.value) || 0;
+            const annualSalary = monthlySalary * 12;
+            document.getElementById('annualGrossSalaryClt').value = annualSalary.toFixed(2);
+        });
+    } else {
+        console.error("Erro CRÍTICO: Campo 'salaryClt' não encontrado para calcular salário anual!");
     }
 
 
@@ -286,8 +350,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (financeForm) {
         financeForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            await saveAllData();
-            alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
+            await saveAllData(); // Salva os inputs financeiros
+
+            // NOVO: Realiza os cálculos CLT e exibe os resultados
+            const userResume = await loadUserResume(); // Carrega os dados mais recentes
+            const financialInputs = userResume.financial || {};
+            const cltResults = calculateCltResults(financialInputs);
+            displayCltResults(cltResults); // Exibe os resultados na UI
+
+            alert('Cálculos CLT realizados e salvos!'); // Mensagem de confirmação
         });
     } else {
         console.error("Erro CRÍTICO: Formulário 'financeForm' não encontrado! Verifique o HTML.");
