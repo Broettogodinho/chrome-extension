@@ -250,8 +250,6 @@ function displayCltResults(results) {
     };
 
     // Preenche os SPANs com os resultados formatados
-    // Adicionei verificações `if (document.getElementById('ID'))` para robustez
-    // (Embora no seu caso o HTML já está validado, isso é uma boa prática)
     const elementsToUpdate = {
         'resultGrossSalaryClt': results.grossSalaryClt,
         'resultInssMonthly': results.inssMonthly,
@@ -284,14 +282,13 @@ function displayCltResults(results) {
 // --- Listener para o Evento DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega todos os dados (currículo e financeiros) quando o pop-up é aberto
-    loadAllData(); // Esta função agora também atualiza o salário anual ao carregar
+    loadAllData(); 
 
     // --- Gerenciamento de Abas ---
     const tabResumeButton = document.getElementById('tabresume'); // IDs em minúsculas
     const tabFinanceButton = document.getElementById('tabfinance'); // IDs em minúsculas
 
     // Adiciona event listeners APENAS SE os botões forem encontrados.
-    // Isso evita o erro de addEventListener em 'null'.
     if (tabResumeButton) {
         tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
     } else {
@@ -335,8 +332,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // NOVO: Adiciona Listener para Salário Bruto CLT
     const salaryCltInput = document.getElementById('salaryClt');
-    if (salaryCltInput) { // Adicionado verificação
-        salaryCltInput.addEventListener('input', () => { // Usa 'input' para atualizar em tempo real
+    if (salaryCltInput) { 
+        salaryCltInput.addEventListener('input', () => { 
             const monthlySalary = parseFloat(salaryCltInput.value) || 0;
             const annualSalary = monthlySalary * 12;
             document.getElementById('annualGrossSalaryClt').value = annualSalary.toFixed(2);
@@ -350,12 +347,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (financeForm) {
         financeForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            await saveAllData(); // Salva os inputs financeiros
+            await saveAllData(); 
 
             // NOVO: Realiza os cálculos CLT e exibe os resultados
             const userResume = await loadUserResume(); // Carrega os dados mais recentes
             const financialInputs = userResume.financial || {};
+            console.log('Dados financeiros de entrada (financialInputs):', financialInputs);
+            console.log('Salário CLT Bruto (input):', financialInputs.salaryClt); 
             const cltResults = calculateCltResults(financialInputs);
+            console.log('Resultados CLT (cltResults):', cltResults);
             displayCltResults(cltResults); // Exibe os resultados na UI
 
             alert('Cálculos CLT realizados e salvos!'); // Mensagem de confirmação

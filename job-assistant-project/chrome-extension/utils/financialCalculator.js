@@ -1,5 +1,7 @@
+// chrome-extension/utils/financialCalculator.js
+
 /**
- * @financialCalculator.js Contém todas as funções de cálculo financeiro para CLT e PJ.
+ * @file Contém todas as funções de cálculo financeiro para CLT e PJ.
  * Os valores das tabelas de impostos são referenciados para 2025.
  * ATENÇÃO: Estes valores são baseados em pesquisas realizadas em Junho de 2025.
  * Tabelas fiscais (INSS, IRRF, Salário Mínimo, DAS MEI, Simples Nacional)
@@ -7,71 +9,81 @@
  * Para um projeto de portfólio, esta é uma representação válida dos cálculos.
  */
 
-// --- Tabelas de Impostos (Valores de 2025) 
+// Tabela INSS para Empregados, Empregados Domésticos e Trabalhadores Avulsos (2025)
+
 export const INSS_TABLE_2025 = [
     { limit: 1518.00, percent: 0.075 }, // até 1 salário mínimo
     { limit: 2793.88, percent: 0.09 },
     { limit: 4190.83, percent: 0.12 },
     { limit: 8157.41, percent: 0.14 } // Teto de contribuição INSS para 2025
 ];
-export const INSS_MAX_CONTRIBUITION_2025 = 951.62; // Valor máximo de desconto INSS (teto)
+export const INSS_MAX_CONTRIBUTION_2025 = 951.62; // Valor máximo de desconto INSS (teto)
 
-// --- Tabela IRRF (Imposto de Renda Retido na Fonte) - Base de cálculo mensal (2025)
-export const IRPF_TABLE_2025 = [
-     { limit: 2259.20, percent: 0, deduction: 0 },
+// Tabela IRRF (Imposto de Renda Retido na Fonte) - Base de cálculo mensal (2025)
+export const IRRF_TABLE_2025 = [
+    { limit: 2259.20, percent: 0, deduction: 0 },
     { limit: 2826.65, percent: 0.075, deduction: 169.44 },
     { limit: 3751.05, percent: 0.15, deduction: 381.44 },
     { limit: 4664.68, percent: 0.225, deduction: 662.77 },
-    { limit: Infinity, percent: 0.275, deduction: 896.00 }
+    { limit: Infinity, percent: 0.275, deduction: 896.00 } 
 ];
 
-// dedução por Dependente (2025)
+// Dedução por Dependente (2025)
 export const DEDUCTION_PER_DEPENDENT_2025 = 189.59;
 
 // Valores fixos do DAS MEI (2025) - Referência para o INSS é o Salário Mínimo 2025 (R$ 1.518,00)
-export const MEI_INSS_PERCENTAGE = 0.05; //5% do valor do salário mínimo
-export const MEI_MINIMUM_WAGE_2025 = 1518.00; // valor do salário minimo em 2025
-export const MEI_ICMS_TAX_2025 = 1.00; //imposto para comérico/ industria 
-export const MEI_ISS_TAX_2025 = 5.00; // imposto para serviço
+export const MEI_INSS_PERCENTAGE = 0.05;
+export const MEI_MINIMUM_WAGE_2025 = 1518.00;
+export const MEI_ICMS_TAX_2025 = 1.00;
+export const MEI_ISS_TAX_2025 = 5.00;
 
-// --- funções de calculo CLT 
+// Exemplo para um anexo do Simples Nacional (Anexo III)
+export const SN_ANEXO_III_2025 = [
+    { limit: 180000.00, percent: 0.06, deduction: 0 },
+    { limit: 360000.00, percent: 0.112, deduction: 9360.00 },
+    { limit: 720000.00, percent: 0.135, deduction: 17640.00 },
+    { limit: 1800000.00, percent: 0.16, deduction: 35640.00 },
+    { limit: 3600000.00, percent: 0.21, deduction: 125640.00 },
+    { limit: 4800000.00, percent: 0.33, deduction: 648000.00 }
+];
+
+
+// --- Funções de Cálculo CLT ---
+
 /**
  * Calcula o valor do INSS mensal com base na tabela progressiva.
+ * A lógica é somar as contribuições de cada faixa.
  * @param {number} grossSalary - Salário bruto mensal.
  * @returns {number} Valor do INSS mensal a ser descontado.
  */
 export function calculateInss(grossSalary) {
-    if (grossSalary <=0) return 0;
+    if (grossSalary <= 0) return 0;
 
-    let inss = 0;
-    let base = grossSalary;
+    let totalInss = 0;
+    let baseCalculoAtual = grossSalary;
 
-    // A lógica para INSS é por faixas de contribuição acumuladas ou por alíquota efetiva.
-    // foi usada a forma de cálculo por faixas para ser mais precisa, como a Receita Federal.
-    // Para simplificar, esta implementação usa a alíquota final da faixa menos a dedução,
-    // que é como o imposto de renda, mas para INSS o cálculo é por faixas acumuladas.
-   
+    // Percorre as faixas da tabela do INSS
+    for (let i = 0; i < INSS_TABLE_2025.length; i++) {
+        const currentRange = INSS_TABLE_2025[i];
+        // O limite inferior da faixa atual é o limite da faixa anterior + 1
+        const lowerLimitCurrentRange = (i === 0) ? 0 : (INSS_TABLE_2025[i - 1].limit + 0.01);
 
-    // Implementação simplificada (alíquota efetiva e parcela a deduzir) para INSS,
-    // que é a forma como o IRRF é apresentado, mas que alguns sites usam para INSS também.
-    for (const range of INSS_TABLE_2025) {
-        if (grossSalary <= range.limit) {
-            // o calculo do INSS é mais complexo, o que é apresentado é apenas simulação
-            let previousLimit = 0;
-            if(INSS_TABLE_2025.indexOf(range) > 0) {
-                previousLimit = INSS_TABLE_2025[INSS_TABLE_2025.indexOf(range) - 1].limit
-            }
-            inss = (grossSalary - previousLimit) * range.percent;
-            for (let i = 0; i < INSS_TABLE_2025.indexOf(range); i++){
-                inss += (INSS_TABLE_2025[i].limit - (i === 0 ? 0 : INSS_TABLE_2025[i-1].limit)) * INSS_TABLE_2025[i].percent;
-            }
+        // Se o salário bruto for maior que o limite inferior da faixa atual
+        if (grossSalary >= lowerLimitCurrentRange) {
+            // O valor a ser contribuído nesta faixa é o menor entre:
+            // o salário que sobra para ser taxado OU o tamanho da faixa
+            const taxableAmountInThisRange = Math.min(grossSalary, currentRange.limit) - lowerLimitCurrentRange + (i === 0 ? 0 : 0.00); // Ajuste para o primeiro limite
+            totalInss += taxableAmountInThisRange * currentRange.percent;
+        } else {
+            // Se o salário não alcança essa faixa, não contribui mais
             break;
         }
     }
 
-    //GARANTIA QUE NAO ULTRAPASSARÁ O TETO
-    return Math.min(inss, INSS_MAX_CONTRIBUITION_2025);
+    // Garante que não ultrapasse o teto de contribuição do INSS
+    return Math.min(totalInss, INSS_MAX_CONTRIBUTION_2025);
 }
+
 
 /**
  * Calcula o valor do IRRF mensal.
@@ -85,7 +97,7 @@ export function calculateIrrf(baseCalculo, numDependentes = 0) {
     const deducaoPorDependente = numDependentes * DEDUCTION_PER_DEPENDENT_2025;
     const baseCalculoComDeducoes = baseCalculo - deducaoPorDependente;
 
-    if (baseCalculoComDeducoes <= 0) return 0; // Se a base for negativa ou zero após deduções
+    if (baseCalculoComDeducoes <= 0) return 0;
 
     let irrf = 0;
     for (const range of IRRF_TABLE_2025) {
@@ -94,7 +106,7 @@ export function calculateIrrf(baseCalculo, numDependentes = 0) {
             break;
         }
     }
-    return Math.max(0, irrf); // Garante que o IRRF não seja negativo
+    return Math.max(0, irrf);
 }
 
 /**
@@ -103,10 +115,14 @@ export function calculateIrrf(baseCalculo, numDependentes = 0) {
  * @param {number} timeInCompanyYearsClt - Estimativa de tempo na empresa em anos (para proporcionalidade, se usada).
  * @returns {number} Valor do 13º Salário (bruto).
  */
-export function calculateThirteenthSalary(annualGrossSalaryClt, timeInCompanyYearsClt) {
-    // Simplificado para 1 salário anual de referência. INSS e IRRF incidem na prática.
-    // Para estimativa de benefício anual, o valor bruto é usado como base.
-    return annualGrossSalaryClt;
+export function calculateThirteenthSalary(monthlyGrossSalary, timeInCompanyYearsClt) {
+    // Se a estimativa de tempo for 0, ou se for menor que 1 ano (para não ter 13º no primeiro ano proporcional de forma simples)
+    // Para um cálculo mais preciso, o tempo precisaria ser em meses no ano de referência.
+    // Vamos considerar que se o tempo for >= 1 ano, ele recebe 1 salário integral de 13º para o cálculo anual.
+     if (timeInCompanyYearsClt >= 1) {
+        return monthlyGrossSalary; 
+     }
+    return 0;
 }
 
 /**
@@ -115,9 +131,13 @@ export function calculateThirteenthSalary(annualGrossSalaryClt, timeInCompanyYea
  * @param {number} timeInCompanyYearsClt - Estimativa de tempo na empresa em anos (para proporcionalidade, se usada).
  * @returns {number} Valor das Férias + 1/3 (bruto).
  */
-export function calculateVacation(annualGrossSalaryClt, timeInCompanyYearsClt) {
-    // Simplificado para (Salário Anual + 1/3). Impostos incidem na prática.
-    return annualGrossSalaryClt * (4 / 3);
+export function calculateVacation(monthlyGrossSalary, timeInCompanyYearsClt) {
+    // Férias são adquiridas após 12 meses de trabalho (período aquisitivo).
+    // Para simplificar, se o tempo for >= 1 ano, ele tem direito a férias + 1/3.
+    if (timeInCompanyYearsClt >= 1) {
+        return monthlyGrossSalary * (4 / 3); // Salário mensal + 1/3
+    }
+    return 0; // Se não completou 1 ano de período aquisitivo, assume 0 (simplificação)
 }
 
 /**
@@ -147,34 +167,31 @@ export function calculateRescissionFine(fgtsMonthly, timeInCompanyYears) {
  * @returns {Object} Um objeto com todos os resultados calculados para CLT.
  */
 export function calculateCltResults(financialInputs) {
-    const salaryClt = financialInputs.salaryClt || 0; // Salário Bruto Mensal
-    const vrClt = financialInputs.vrClt || 0; // Vale Refeição/Alimentação Mensal
-    const healthPlanClt = financialInputs.healthPlanClt || 0; // Plano de Saúde CLT (parte paga pelo funcionário)
-    const annualGrossSalaryClt = financialInputs.annualGrossSalaryClt || 0; // Salário Bruto Anual de referência
-    const bonusClt = financialInputs.bonusClt || 0; // Outros Bônus/Premiações Anuais
-    const timeInCompanyYearsClt = financialInputs.timeInCompanyYearsClt || 1; // Tempo na Empresa em Anos
+    const salaryClt = financialInputs.salaryClt || 0;
+    const vrClt = financialInputs.vrClt || 0;
+    const healthPlanClt = financialInputs.healthPlanClt || 0;
+    const annualGrossSalaryClt = financialInputs.annualGrossSalaryClt || 0;
+    const bonusClt = financialInputs.bonusClt || 0;
+    const timeInCompanyYearsClt = financialInputs.timeInCompanyYearsClt || 1;
 
     // --- Cálculos Mensais ---
     const inssMonthly = calculateInss(salaryClt);
-    const baseIrrfMonthly = salaryClt - inssMonthly; // Base de cálculo IRRF
-    const irrfMonthly = calculateIrrf(baseIrrfMonthly); // Assumindo 0 dependentes por enquanto
+    const baseIrrfMonthly = salaryClt - inssMonthly; 
+    const irrfMonthly = calculateIrrf(baseIrrfMonthly);
 
-    // Salário Líquido Mensal Estimado CLT
-    // Salário Bruto - INSS - IRRF - Plano de Saúde (parte do funcionário) + VR/VA (se for benefício líquido)
-    const netMonthlyClt = salaryClt - inssMonthly - irrfMonthly - healthPlanClt + vrClt;
+    const netMonthlyBeforeBenefits = salaryClt - inssMonthly - irrfMonthly - healthPlanClt;
+    const netMonthlyClt = netMonthlyBeforeBenefits + vrClt;
 
     // --- Cálculos Anuais ---
     const inssAnnual = inssMonthly * 12;
     const irrfAnnual = irrfMonthly * 12;
     const fgtsMonthly = calculateFgtsMonthly(salaryClt);
-    const fgtsAnnual = fgtsMonthly * 12; // FGTS anual pago pela empresa
+    const fgtsAnnual = fgtsMonthly * 12;
 
     const thirteenthSalary = calculateThirteenthSalary(annualGrossSalaryClt, timeInCompanyYearsClt);
     const vacation = calculateVacation(annualGrossSalaryClt, timeInCompanyYearsClt);
-    const rescissionFine = calculateRescissionFine(fgtsMonthly, timeInCompanyYearsClt); // FGTS mensal * 12 meses/ano * anos * 0.40
+    const rescissionFine = calculateRescissionFine(fgtsMonthly, timeInCompanyYearsClt);
 
-    // Total Líquido Anual Estimado CLT
-    // Salário Líquido Mensal * 12 meses + 13º + Férias + Bônus/Premiações
     const totalNetAnnualClt = (netMonthlyClt * 12) + thirteenthSalary + vacation + bonusClt;
 
 
@@ -188,10 +205,10 @@ export function calculateCltResults(financialInputs) {
         vacation: vacation,
         fgtsMonthly: fgtsMonthly,
         fgtsAnnual: fgtsAnnual,
-        rescissionFine: rescissionFine, // Multa rescisória do FGTS (anual)
-        vrVa: vrClt, // VR/VA mensal
-        healthPlanCltOut: healthPlanClt, // Valor que o funcionário paga do plano
-        bonusClt: bonusClt, // Bônus anual
+        rescissionFine: rescissionFine,
+        vrVa: vrClt,
+        healthPlanCltOut: healthPlanClt,
+        bonusClt: bonusClt,
         netMonthlyClt: netMonthlyClt,
         netAnnualClt: totalNetAnnualClt
     };
@@ -205,17 +222,15 @@ export function calculateCltResults(financialInputs) {
  * @returns {Object} Um objeto com todos os resultados calculados para PJ.
  */
 export function calculatePjResults(financialInputs) {
-    const salaryPj = financialInputs.salaryPj || 0; // Salário Bruto PJ (mensal)
-    const accountantCostPj = financialInputs.accountantCostPj || 0; // Custo de contador mensal
-    const taxesPjPercent = (financialInputs.taxesPjPercent || 0) / 100; // Porcentagem de impostos PJ (converter para decimal)
-    const healthPlanPj = financialInputs.healthPlanPj || 0; // Plano de saúde PJ (mensal)
-    const bonusPj = financialInputs.bonusPj || 0; // Bônus anual PJ
+    const salaryPj = financialInputs.salaryPj || 0;
+    const accountantCostPj = financialInputs.accountantCostPj || 0;
+    const taxesPjPercent = (financialInputs.taxesPjPercent || 0) / 100;
+    const healthPlanPj = financialInputs.healthPlanPj || 0;
+    const bonusPj = financialInputs.bonusPj || 0;
 
-    // Cálculos PJ Mensais
-    const taxesPjMonthly = salaryPj * taxesPjPercent; // Imposto PJ sobre o pró-labore/faturamento mensal
+    const taxesPjMonthly = salaryPj * taxesPjPercent;
     const netMonthlyPj = salaryPj - taxesPjMonthly - accountantCostPj - healthPlanPj;
 
-    // Cálculos PJ Anuais
     const netAnnualPj = (netMonthlyPj * 12) + bonusPj;
 
     return {
