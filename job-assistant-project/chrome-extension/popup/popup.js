@@ -229,7 +229,6 @@ async function saveAllData() {
     }
 }
 
-
 // --- Listener para o Evento DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega todos os dados (currículo e financeiros) quando o pop-up é aberto
@@ -241,9 +240,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
     tabFinanceButton.addEventListener('click', () => showTab('financeContent'));
-
-    // Ativa a aba de currículo por padrão ao carregar
-    showTab('resumeContent');
 
 
     // --- Eventos do Formulário de Currículo ---
@@ -260,11 +256,13 @@ document.addEventListener('DOMContentLoaded', () => {
         experiencesContainer.appendChild(createExperienceBlock());
     });
 
-
+    // --- Evento do Formulário Financeiro ---
     const financeForm = document.getElementById('financeForm');
     financeForm.addEventListener('submit', async (event) => {
         event.preventDefault();
         await saveAllData();
         alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
     });
+    
+    showTab('resumeContent');
 });
