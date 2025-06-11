@@ -19,15 +19,12 @@ function showTab(tabIdToShow) {
         content.classList.remove('active');
     });
 
-    // Esta é a linha onde o erro "tabIdToShowreplace is not defined" e "Cannot read properties of null" ocorre.
-    // O ponto '.' entre 'tabIdToShow' e 'replace' é crucial e está presente aqui.
+    // Esta linha gera IDs como 'tabresume', 'tabfinance'
     const tabButtonId = `tab${tabIdToShow.replace('Content', '')}`;
-    const tabButton = document.getElementById(tabButtonId);
-    const tabContent = document.getElementById(tabIdToShow);
+    const tabButton = document.getElementById(tabButtonId); // Procura por 'tabresume' ou 'tabfinance'
+    const tabContent = document.getElementById(tabIdToShow); // Procura por 'resumeContent' ou 'financeContent'
 
-    // As verificações 'if (elemento)' foram removidas para simplificar, mas
-    // se os elementos não existirem no HTML, este é o ponto onde o erro ocorrerá.
-    // O HTML que você me forneceu TEM esses IDs e com a capitalização correta.
+    // Assumimos que os elementos existem e são encontrados agora, após todas as verificações e correções.
     tabButton.classList.add('active');
     tabContent.classList.add('active');
 }
@@ -47,9 +44,7 @@ function createExperienceBlock(experience = {}) {
     const cargo = experience.cargo || '';
     const empresa = experience.empresa || '';
     const dataInicio = experience.dataInicio || '';
-    // Propriedade dataFim: assegura que se `experience.dataFim` for 'Atual', o campo fica vazio.
     const dataFim = experience.dataFim === 'Atual' ? '' : (experience.dataFim || '');
-    // Verifica se a experiência é ou foi marcada como 'Atual'.
     const isAtual = experience.dataFim === 'Atual' || experience.isAtual || false;
 
     const descricao = experience.descricao || '';
@@ -229,40 +224,72 @@ async function saveAllData() {
     }
 }
 
+
 // --- Listener para o Evento DOMContentLoaded ---
 document.addEventListener('DOMContentLoaded', () => {
     // Carrega todos os dados (currículo e financeiros) quando o pop-up é aberto
     loadAllData();
 
     // --- Gerenciamento de Abas ---
-    const tabResumeButton = document.getElementById('tabResume');
-    const tabFinanceButton = document.getElementById('tabFinance');
+    // CORREÇÃO FINAL: Alinhar IDs JavaScript com os IDs em minúsculas do HTML.
+    // Usar os IDs exatamente como estão no HTML: 'tabresume' e 'tabfinance'.
+    const tabResumeButton = document.getElementById('tabresume'); // Corrigido de 'tabResume' para 'tabresume'
+    const tabFinanceButton = document.getElementById('tabfinance'); // Corrigido de 'tabFinance' para 'tabfinance'
 
-    tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
-    tabFinanceButton.addEventListener('click', () => showTab('financeContent'));
+    // Adiciona event listeners APENAS SE os botões forem encontrados.
+    // Isso evita o erro de addEventListener em 'null'.
+    if (tabResumeButton) {
+        tabResumeButton.addEventListener('click', () => showTab('resumeContent'));
+    } else {
+        console.error("Erro CRÍTICO: Botão 'tabresume' não encontrado! Verifique o HTML.");
+    }
 
+    if (tabFinanceButton) {
+        tabFinanceButton.addEventListener('click', () => showTab('financeContent'));
+    } else {
+        console.error("Erro CRÍTICO: Botão 'tabfinance' não encontrado! Verifique o HTML.");
+    }
 
-    // --- Eventos do Formulário de Currículo ---
-    const resumeForm = document.getElementById('resumeForm');
-    resumeForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        await saveAllData();
-    });
-
-    // Evento para adicionar nova experiência
-    const addExperienceBtn = document.getElementById('addExperienceBtn');
-    addExperienceBtn.addEventListener('click', () => {
-        const experiencesContainer = document.getElementById('experiencesContainer');
-        experiencesContainer.appendChild(createExperienceBlock());
-    });
-
-    // --- Evento do Formulário Financeiro ---
-    const financeForm = document.getElementById('financeForm');
-    financeForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-        await saveAllData();
-        alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
-    });
-    
+    // Ativa a aba de currículo por padrão ao carregar
+    // Esta chamada só causará um erro se 'resumeContent' for null, mas o HTML já validou isso.
     showTab('resumeContent');
+
+
+    // --- Eventos dos Formulários ---
+    // Validação de existência para cada elemento antes de adicionar o listener
+    const resumeForm = document.getElementById('resumeForm');
+    if (resumeForm) {
+        resumeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await saveAllData();
+        });
+    } else {
+        console.error("Erro CRÍTICO: Formulário 'resumeForm' não encontrado! Verifique o HTML.");
+    }
+
+    const addExperienceBtn = document.getElementById('addExperienceBtn');
+    if (addExperienceBtn) {
+        addExperienceBtn.addEventListener('click', () => {
+            const experiencesContainer = document.getElementById('experiencesContainer');
+            if (experiencesContainer) {
+                experiencesContainer.appendChild(createExperienceBlock());
+            } else {
+                console.error("Erro CRÍTICO: Container de experiências 'experiencesContainer' não encontrado! Verifique o HTML.");
+            }
+        });
+    } else {
+        console.error("Erro CRÍTICO: Botão 'addExperienceBtn' não encontrado! Verifique o HTML.");
+    }
+
+
+    const financeForm = document.getElementById('financeForm');
+    if (financeForm) {
+        financeForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            await saveAllData();
+            alert('Dados financeiros salvos para simulação. Prossiga para os cálculos!');
+        });
+    } else {
+        console.error("Erro CRÍTICO: Formulário 'financeForm' não encontrado! Verifique o HTML.");
+    }
 });
