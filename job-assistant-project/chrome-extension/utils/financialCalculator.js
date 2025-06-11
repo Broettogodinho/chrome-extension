@@ -1,5 +1,3 @@
-// chrome-extension/utils/financialCalculator.js
-
 /**
  * @file Contém todas as funções de cálculo financeiro para CLT e PJ.
  * Os valores das tabelas de impostos são referenciados para 2025.
