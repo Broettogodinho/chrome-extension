@@ -1,14 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Assistente de Candidaturas",
-  "version": "1.0",
-  "description": "Automatize suas candidaturas e compare propostas CLT vs PJ.",
+  "version": "1.1.0",
+  "description": "Guarde seu currículo, preencha formulários de vagas e compare propostas CLT vs PJ.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
   "action": {
+    "default_title": "Assistente de Candidaturas",
     "default_popup": "popup/popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -21,10 +22,16 @@
     "activeTab",
     "scripting"
   ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "commands": {
+    "autofill-form": {
+      "suggested_key": {
+        "default": "Alt+Shift+F"
+      },
+      "description": "Preencher o formulário da página com o currículo"
+    }
   }
 }
