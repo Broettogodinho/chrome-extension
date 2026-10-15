@@ -1,0 +1,21 @@
+# Python
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Segredos e saídas locais do pipeline
+.env
+data-pipeline/data/
+data-pipeline/output/
+
+# Node / empacotamento da extensão
+node_modules/
+*.zip
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

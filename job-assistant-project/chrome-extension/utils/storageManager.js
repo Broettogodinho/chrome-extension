@@ -1,24 +1,42 @@
 // chrome-extension/utils/storageManager.js
 
 /**
- * @file Gerencia as operações de armazenamento local da extensão usando chrome.storage.local.
+ * @file Operações de armazenamento local (chrome.storage.local) e estrutura do currículo.
  */
 
-// Define a versão atual da estrutura do currículo
-const CURRENT_RESUME_VERSION = 1;
+/** Versão atual da estrutura do currículo. Incrementar ao mudar o formato salvo. */
+export const CURRENT_RESUME_VERSION = 2;
+
+/** Estrutura vazia do currículo; usada como base para preencher campos ausentes. */
+export function emptyResume() {
+    return {
+        version: CURRENT_RESUME_VERSION,
+        personal: {
+            fullName: '',
+            email: '',
+            phone: '',
+            address: '',
+            city: '',
+            state: '',
+            linkedin: '',
+            portfolio: ''
+        },
+        experience: [],
+        education: [],
+        skills: { hard: [], soft: [] },
+        coverLetter: '',
+        financial: {}
+    };
+}
 
 /**
- * Salva um valor no armazenamento local da extensão.
- * @param {string} key - A chave sob a qual o valor será armazenado (ex: 'userResume', 'financialData').
- * @param {any} value - O valor a ser armazenado. Pode ser um objeto, array, string, etc.
- * @returns {Promise<void>} Uma promessa que resolve quando o valor é salvo.
+ * Salva um valor no armazenamento local.
+ * @param {string} key
+ * @param {any} value
  */
 export async function saveData(key, value) {
     try {
-        
-        const dataToSave = { [key]: value };
-        await chrome.storage.local.set(dataToSave);
-        console.log(`Dados salvos com sucesso para a chave: ${key}`);
+        await chrome.storage.local.set({ [key]: value });
     } catch (error) {
         console.error(`Erro ao salvar dados para a chave ${key}:`, error);
         throw new Error(`Falha ao salvar dados para ${key}.`);
@@ -26,9 +44,9 @@ export async function saveData(key, value) {
 }
 
 /**
- * Carrega um valor do armazenamento local da extensão.
- * @param {string} key - A chave do valor a ser carregado (ex: 'userResume', 'financialData').
- * @returns {Promise<any | undefined>} Uma promessa que resolve com o valor carregado, ou undefined se não encontrado.
+ * Carrega um valor do armazenamento local.
+ * @param {string} key
+ * @returns {Promise<any|undefined>}
  */
 export async function loadData(key) {
     try {
@@ -41,23 +59,40 @@ export async function loadData(key) {
 }
 
 /**
- * Funções específicas para o currículo (userResume) 
+ * Migra um currículo salvo em versão antiga para a versão atual.
+ * v1 → v2: adiciona formação, habilidades, carta e novos campos pessoais.
+ * @param {Object} resume
+ * @returns {Object}
  */
+export function migrateResume(resume) {
+    const base = emptyResume();
+    if (!resume || typeof resume !== 'object') return base;
+
+    return {
+        ...base,
+        ...resume,
+        version: CURRENT_RESUME_VERSION,
+        personal: { ...base.personal, ...(resume.personal || {}) },
+        experience: Array.isArray(resume.experience) ? resume.experience : [],
+        education: Array.isArray(resume.education) ? resume.education : [],
+        skills: {
+            hard: Array.isArray(resume.skills?.hard) ? resume.skills.hard : [],
+            soft: Array.isArray(resume.skills?.soft) ? resume.skills.soft : []
+        },
+        coverLetter: typeof resume.coverLetter === 'string' ? resume.coverLetter : '',
+        financial: resume.financial && typeof resume.financial === 'object' ? resume.financial : {}
+    };
+}
+
 export async function saveUserResume(resume) {
-    resume.version = CURRENT_RESUME_VERSION;
-    return saveData('userResume', resume);
+    return saveData('userResume', { ...resume, version: CURRENT_RESUME_VERSION });
 }
 
 export async function loadUserResume() {
-    let userResume = await loadData('userResume');
-
-    // Implementação básica da estratégia de migração:
-    if (userResume && userResume.version < CURRENT_RESUME_VERSION) {
-        console.warn(`Migrando dados do currículo da versão ${userResume.version} para ${CURRENT_RESUME_VERSION}.`);
-        // userResume = migrateResumeStructure(userResume, userResume.version, CURRENT_RESUME_VERSION);
-        // await saveUserResume(userResume); // Salva o currículo migrado
-    } else if (!userResume) {
-        userResume = {}; 
+    const stored = await loadData('userResume');
+    const resume = migrateResume(stored);
+    if (stored && stored.version !== CURRENT_RESUME_VERSION) {
+        await saveUserResume(resume);
     }
-    return userResume;
+    return resume;
 }
