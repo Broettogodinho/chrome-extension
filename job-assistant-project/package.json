@@ -1,0 +1,12 @@
+{
+  "name": "assistente-de-candidaturas",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Extensão Chrome: currículo, autopreenchimento de vagas e comparativo CLT vs PJ.",
+  "scripts": {
+    "test": "node --test \"tests/*.test.mjs\"",
+    "zip": "cd chrome-extension && zip -r ../assistente-de-candidaturas.zip . -x '.*'"
+  },
+  "engines": { "node": ">=22" },
+  "license": "MIT"
+}

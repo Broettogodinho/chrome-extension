@@ -46,7 +46,7 @@
      */
     const RULES = [
         { key: 'linkedin', include: [/linked ?in/] },
-        { key: 'portfolio', include: [/portfolio|portifolio|github|site pessoal|website|personal site|behance/] },
+        { key: 'portfolio', include: [/portfolio|portifolio|git ?hub|git ?lab|site pessoal|website|personal site|behance/] },
         { key: 'email', include: [/e ?mail/], exclude: [/confirm.*senha|password/] },
         { key: 'phone', include: [/telefone|celular|whats ?app|phone|mobile|\bfone\b|contato tel/] },
         { key: 'coverLetter', include: [/carta|cover letter|apresentacao|por que voce|why do you|sobre voce|about you|motivacao|mensagem ao recrutador/] },

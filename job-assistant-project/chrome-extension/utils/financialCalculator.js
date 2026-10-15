@@ -53,7 +53,8 @@ export const FGTS_FINE_RATE = 0.40;
 // Utilitários
 // ---------------------------------------------------------------------------
 
-const round2 = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+// toPrecision(12) remove o ruído binário (121.575 vira 121.57499999...) antes do arredondamento comercial.
+const round2 = (value) => Math.round(Number((value * 100).toPrecision(12))) / 100;
 const num = (value, fallback = 0) => {
     const parsed = Number(value);
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
