@@ -1,164 +1,188 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <title>Assistente de Candidaturas</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-  <nav class="tabs">
-    <button id="tabresume" class="tab-button active">Currículo</button>
-    <button id="tabfinance" class="tab-button">CLT vs PJ</button>
+  <nav class="tabs" role="tablist">
+    <button id="tabresume" class="tab-button active" role="tab" type="button">Currículo</button>
+    <button id="tabfinance" class="tab-button" role="tab" type="button">CLT vs PJ</button>
   </nav>
 
+  <div id="statusMessage" class="status" role="status" aria-live="polite" hidden></div>
+
+  <!-- ===================== ABA CURRÍCULO ===================== -->
   <div id="resumeContent" class="tab-content active">
-    <h1>Meu Currículo</h1>
-    <form id="resumeForm">
+    <div class="autofill-bar">
+      <button type="button" id="autofillBtn" class="primary">Preencher formulário desta página</button>
+      <p class="hint">Abra a página da vaga e clique para preencher os campos reconhecidos com seus dados salvos.</p>
+    </div>
+
+    <form id="resumeForm" novalidate>
       <section id="personalInfoSection">
-          <h2>Informações Pessoais</h2>
-          <label for="fullName">Nome Completo:</label>
-          <input type="text" id="fullName" name="fullName" required><br><br>
+        <h2>Informações Pessoais</h2>
+        <label for="fullName">Nome completo</label>
+        <input type="text" id="fullName" name="fullName" autocomplete="name" required>
 
-          <label for="email">Email:</label>
-          <input type="email" id="email" name="email" required><br><br>
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email" autocomplete="email" required>
 
-          <label for="phone">Telefone:</label>
-          <input type="tel" id="phone" name="phone"><br><br>
+        <label for="phone">Telefone</label>
+        <input type="tel" id="phone" name="phone" autocomplete="tel" placeholder="(11) 91234-5678">
 
-          <label for="address">Endereço:</label>
-          <textarea id="address" name="address" rows="3"></textarea><br><br>
+        <label for="address">Endereço</label>
+        <textarea id="address" name="address" rows="2"></textarea>
+
+        <div class="row">
+          <div>
+            <label for="city">Cidade</label>
+            <input type="text" id="city" name="city">
+          </div>
+          <div class="narrow">
+            <label for="state">UF</label>
+            <input type="text" id="state" name="state" maxlength="2">
+          </div>
+        </div>
+
+        <label for="linkedin">LinkedIn</label>
+        <input type="url" id="linkedin" name="linkedin" placeholder="https://www.linkedin.com/in/...">
+
+        <label for="portfolio">Portfólio / GitHub</label>
+        <input type="url" id="portfolio" name="portfolio" placeholder="https://github.com/...">
       </section>
 
       <section id="experienceSection">
-          <h2>Experiências Profissionais</h2>
-          <div id="experiencesContainer">
-              </div>
-          <button type="button" id="addExperienceBtn">Adicionar Experiência</button>
+        <h2>Experiências Profissionais</h2>
+        <div id="experiencesContainer"></div>
+        <button type="button" id="addExperienceBtn" class="secondary">+ Adicionar experiência</button>
       </section>
 
-      <button type="submit" id="saveResumeBtn">Salvar Currículo</button>
+      <section id="educationSection">
+        <h2>Formação Acadêmica</h2>
+        <div id="educationContainer"></div>
+        <button type="button" id="addEducationBtn" class="secondary">+ Adicionar formação</button>
+      </section>
+
+      <section id="skillsSection">
+        <h2>Habilidades</h2>
+        <label for="hardSkills">Hard skills <span class="hint-inline">(separadas por vírgula)</span></label>
+        <textarea id="hardSkills" rows="2" placeholder="SQL, Python, Power BI"></textarea>
+
+        <label for="softSkills">Soft skills <span class="hint-inline">(separadas por vírgula)</span></label>
+        <textarea id="softSkills" rows="2" placeholder="Comunicação, trabalho em equipe"></textarea>
+        <div id="skillsPreview" class="chips"></div>
+      </section>
+
+      <section id="coverLetterSection">
+        <h2>Carta de Apresentação</h2>
+        <p class="hint">Use <code>{empresa}</code> e <code>{cargo}</code> para personalizar; eles são trocados ao preencher se a página trouxer esses dados.</p>
+        <textarea id="coverLetter" rows="7" maxlength="5000"></textarea>
+        <div class="counter"><span id="coverLetterCount">0</span>/5000</div>
+      </section>
+
+      <button type="submit" id="saveResumeBtn" class="primary">Salvar currículo</button>
     </form>
   </div>
 
+  <!-- ===================== ABA CLT vs PJ ===================== -->
   <div id="financeContent" class="tab-content">
-    <h1>Comparação CLT vs PJ</h1>
-    <form id="financeForm">
+    <form id="financeForm" novalidate>
       <section>
-        <h2>Dados CLT</h2>
-        <label for="salaryClt">Salário Bruto CLT (mensal):</label>
-        <input type="number" id="salaryClt" name="salaryClt" step="0.01" min="0" value="0"><br><br>
+        <h2>Proposta CLT</h2>
+        <label for="salaryClt">Salário bruto mensal</label>
+        <input type="number" id="salaryClt" step="0.01" min="0" value="0">
 
-        <label for="vrClt">Vale Refeição/Alimentação (mensal):</label>
-        <input type="number" id="vrClt" name="vrClt" step="0.01" min="0" value="0"><br><br>
+        <label for="vrClt">Vale refeição/alimentação (mensal)</label>
+        <input type="number" id="vrClt" step="0.01" min="0" value="0">
 
-        <label for="healthPlanClt">Plano de Saúde CLT (mensal, parte paga por você):</label>
-        <input type="number" id="healthPlanClt" name="healthPlanClt" step="0.01" min="0" value="0"><br><br>
+        <label for="healthPlanClt">Plano de saúde (mensal, parte paga por você)</label>
+        <input type="number" id="healthPlanClt" step="0.01" min="0" value="0">
 
-        <h3>Benefícios Anuais (para base de cálculo)</h3>
-        <label for="annualGrossSalaryClt">Salário Bruto Anual (Base para 13º/Férias):</label>
-        <input type="number" id="annualGrossSalaryClt" name="annualGrossSalaryClt" step="0.01" min="0" value="0" readonly><br><br>
-        
-        <label for="bonusClt">Outros Bônus / Premiações Anuais (CLT):</label>
-        <input type="number" id="bonusClt" name="bonusClt" step="0.01" min="0" value="0"><br><br>
-        
-        <label for="timeInCompanyYearsClt">Estimativa de Tempo na Empresa (anos):</label>
-        <input type="number" id="timeInCompanyYearsClt" name="timeInCompanyYearsClt" min="0" value="1"><br><br>
+        <label for="annualGrossSalaryClt">Salário bruto anual (12 meses)</label>
+        <input type="number" id="annualGrossSalaryClt" step="0.01" value="0" readonly tabindex="-1">
+
+        <label for="bonusClt">Bônus / PLR anual (líquido)</label>
+        <input type="number" id="bonusClt" step="0.01" min="0" value="0">
+
+        <div class="row">
+          <div>
+            <label for="timeInCompanyYearsClt">Tempo estimado na empresa (anos)</label>
+            <input type="number" id="timeInCompanyYearsClt" step="0.5" min="0.5" value="1">
+          </div>
+          <div>
+            <label for="dependents">Dependentes (IR)</label>
+            <input type="number" id="dependents" step="1" min="0" value="0">
+          </div>
+        </div>
       </section>
 
-     <section class="results-area"> <h2>Resultados CLT</h2>
-          <div>
-              <label>Salário Bruto Mensal:</label>
-              <span id="resultGrossSalaryClt">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>INSS (Mensal):</label>
-              <span id="resultInssMonthly">R$ 0,00</span>
-          </div><br>
-          <div>
-              <label>INSS (Anual):</label>
-              <span id="resultInssAnnual">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>IRRF (Mensal):</label>
-              <span id="resultIrrfMonthly">R$ 0,00</span>
-          </div><br>
-          <div>
-              <label>IRRF (Anual):</label>
-              <span id="resultIrrfAnnual">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>13º Salário (Anual):</label>
-              <span id="resultThirteenthSalary">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>Férias + 1/3 (Anual):</label>
-              <span id="resultVacation">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>FGTS (Mensal - pago pela empresa):</label>
-              <span id="resultFgtsMonthly">R$ 0,00</span>
-          </div><br>
-          <div>
-              <label>FGTS (Anual - pago pela empresa):</label>
-              <span id="resultFgtsAnnual">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>Multa Rescisória FGTS (40% - Estimativa Anual):</label>
-              <span id="resultRescissionFine">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>VR/VA (Mensal):</label>
-              <span id="resultVrVa">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>Plano de Saúde (CLT - Mensal):</label>
-              <span id="resultHealthPlanCltOut">R$ 0,00</span>
-          </div><br>
-
-          <div>
-              <label>Bônus / Premiações (Anual):</label>
-              <span id="resultBonusClt">R$ 0,00</span>
-          </div><br>
-
-          <h3>Total Líquido CLT</h3>
-          <div>
-              <label>Líquido Mensal Estimado:</label>
-              <span id="resultNetMonthlyClt">R$ 0,00</span>
-          </div><br>
-          <div>
-              <label>Líquido Anual Estimado:</label>
-              <span id="resultNetAnnualClt">R$ 0,00</span>
-          </div><br>
-      </section>
-      
       <section>
-        <h2>Dados PJ</h2>
-        <label for="salaryPj">Salário Bruto PJ (mensal - Pró-Labore/Retirada):</label>
-        <input type="number" id="salaryPj" name="salaryPj" step="0.01" min="0" value="0"><br><br>
+        <h2>Proposta PJ</h2>
+        <label for="salaryPj">Faturamento mensal</label>
+        <input type="number" id="salaryPj" step="0.01" min="0" value="0">
 
-        <label for="accountantCostPj">Custos PJ - Contador (mensal):</label>
-        <input type="number" id="accountantCostPj" name="accountantCostPj" step="0.01" min="0" value="0"><br><br>
+        <label for="taxesPjPercent">Impostos sobre faturamento (%)</label>
+        <input type="number" id="taxesPjPercent" step="0.01" min="0" max="100" value="6">
+        <p class="hint">Simples Nacional Anexo III começa em 6%. Se cair no Anexo V, a alíquota inicial é 15,5%.</p>
 
-        <label for="taxesPjPercent">Custos PJ - Impostos (%) Inicial:</label>
-        <input type="number" id="taxesPjPercent" name="taxesPjPercent" step="0.01" min="0" max="100" value="6"><br><br>
+        <label for="accountantCostPj">Contador (mensal)</label>
+        <input type="number" id="accountantCostPj" step="0.01" min="0" value="0">
 
-        <label for="healthPlanPj">Plano de Saúde PJ (mensal):</label>
-        <input type="number" id="healthPlanPj" name="healthPlanPj" step="0.01" min="0" value="0"><br><br>
+        <label for="healthPlanPj">Plano de saúde (mensal)</label>
+        <input type="number" id="healthPlanPj" step="0.01" min="0" value="0">
 
-        <label for="bonusPj">Outros Bônus / Premiações Anuais (PJ):</label>
-        <input type="number" id="bonusPj" name="bonusPj" step="0.01" min="0" value="0"><br><br>
+        <label for="bonusPj">Bônus anual (bruto)</label>
+        <input type="number" id="bonusPj" step="0.01" min="0" value="0">
       </section>
 
-      <button type="submit" id="calculateBtn">Calcular Comparação</button>
+      <button type="submit" id="calculateBtn" class="primary">Calcular comparação</button>
     </form>
+
+    <section id="comparisonArea" class="results-area verdict" hidden>
+      <h2>Resultado</h2>
+      <p id="comparisonVerdict" class="verdict-text"></p>
+      <div class="result-row"><span class="result-label">Líquido anual CLT + FGTS</span><span id="cmpClt"></span></div>
+      <div class="result-row"><span class="result-label">Líquido anual PJ</span><span id="cmpPj"></span></div>
+      <div class="result-row"><span class="result-label">Diferença (PJ − CLT)</span><span id="cmpDiff"></span></div>
+      <div class="result-row"><span class="result-label">Faturamento PJ para empatar</span><span id="cmpBreakEven"></span></div>
+    </section>
+
+    <section class="results-area" id="cltResultsArea" hidden>
+      <h2>Detalhe CLT</h2>
+      <div class="result-row"><span class="result-label">Salário bruto mensal</span><span id="resultGrossSalaryClt"></span></div>
+      <div class="result-row"><span class="result-label">INSS mensal</span><span id="resultInssMonthly"></span></div>
+      <div class="result-row"><span class="result-label">IRRF mensal</span><span id="resultIrrfMonthly"></span></div>
+      <div class="result-row"><span class="result-label">VR/VA mensal</span><span id="resultVrVa"></span></div>
+      <div class="result-row"><span class="result-label">Plano de saúde mensal</span><span id="resultHealthPlanCltOut"></span></div>
+      <div class="result-row total"><span class="result-label">Líquido mensal</span><span id="resultNetMonthlyClt"></span></div>
+      <h3>Anual</h3>
+      <div class="result-row"><span class="result-label">13º salário (líquido)</span><span id="resultThirteenthSalary"></span></div>
+      <div class="result-row"><span class="result-label">1/3 de férias (líquido)</span><span id="resultVacation"></span></div>
+      <div class="result-row"><span class="result-label">Bônus / PLR</span><span id="resultBonusClt"></span></div>
+      <div class="result-row"><span class="result-label">INSS anual</span><span id="resultInssAnnual"></span></div>
+      <div class="result-row"><span class="result-label">IRRF anual</span><span id="resultIrrfAnnual"></span></div>
+      <div class="result-row"><span class="result-label">FGTS mensal (empresa)</span><span id="resultFgtsMonthly"></span></div>
+      <div class="result-row"><span class="result-label">FGTS anual (empresa)</span><span id="resultFgtsAnnual"></span></div>
+      <div class="result-row"><span class="result-label">Multa 40% FGTS (no período)</span><span id="resultRescissionFine"></span></div>
+      <div class="result-row total"><span class="result-label">Líquido anual</span><span id="resultNetAnnualClt"></span></div>
+      <div class="result-row total"><span class="result-label">Líquido anual + FGTS</span><span id="resultTotalPackageAnnualClt"></span></div>
+    </section>
+
+    <section class="results-area" id="pjResultsArea" hidden>
+      <h2>Detalhe PJ</h2>
+      <div class="result-row"><span class="result-label">Faturamento mensal</span><span id="resultGrossSalaryPj"></span></div>
+      <div class="result-row"><span class="result-label">Impostos mensais</span><span id="resultTaxesPjMonthly"></span></div>
+      <div class="result-row"><span class="result-label">Contador</span><span id="resultAccountantCostPj"></span></div>
+      <div class="result-row"><span class="result-label">Plano de saúde</span><span id="resultHealthPlanPj"></span></div>
+      <div class="result-row total"><span class="result-label">Líquido mensal</span><span id="resultNetMonthlyPj"></span></div>
+      <div class="result-row"><span class="result-label">Impostos anuais</span><span id="resultTaxesPjAnnual"></span></div>
+      <div class="result-row"><span class="result-label">Bônus (líquido)</span><span id="resultBonusPj"></span></div>
+      <div class="result-row total"><span class="result-label">Líquido anual</span><span id="resultNetAnnualPj"></span></div>
+    </section>
+
+    <p class="hint disclaimer">Estimativa com tabelas INSS/IRRF 2026 (inclui o redutor da Lei 15.270/2025). Não considera férias não remuneradas no PJ nem reserva de emergência. Não substitui um contador.</p>
   </div>
 
   <script type="module" src="popup.js"></script>
